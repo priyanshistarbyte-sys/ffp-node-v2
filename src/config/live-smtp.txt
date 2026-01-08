@@ -1,0 +1,17 @@
+"mail" : { 
+        "port":465,
+        "host":"mail.kweebee.com",
+        "smtp_username" : "support@kweebee.com",
+        "smtp_password" : "gggV_Gmf5DBH'L$R",
+        "no_eply":"no-reply@kweebee.com"
+    },
+
+
+
+"mail" : { 
+        "port":465,
+        "host":"smtp.gmail.com",
+        "smtp_username" : "wrp.smtp@gmail.com",
+        "smtp_password" : "AZsxdcfv@123",
+        "no_eply":"no-reply@kweebee.com"
+    }
