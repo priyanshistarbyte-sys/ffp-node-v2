@@ -2,7 +2,7 @@ const express = require('express');
 const router =  express.Router();
 const globalConfiguration = require('@/config/config');
 
-var settings = require('@/controllers/'+globalConfiguration.api_version+'/user-settings');
+var settings = require('@/controllers/user-settings');
 
 router.post('/change-password',settings.changePassword);
 router.post('/delete-account',settings.deleteAccount);

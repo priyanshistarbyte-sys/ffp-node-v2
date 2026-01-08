@@ -1,5 +1,5 @@
-const globalConfiguration = require('@/config/config');
-const securityHelper = require('@/helper/security');
+const globalConfiguration = require('../config/config');
+const securityHelper = require('../helper/security');
 const jwt = require('jsonwebtoken');
 const authenticateJWT = (req, res, next) => {
 

@@ -17,7 +17,7 @@ exports.getSubCategories = async (category_id) => {
         order_by = "event_date desc";
     }
     where.status = 1;
-    where.c_id = c_id;
+    where.category_id = category_id;
 
     var foCategoryLists = await db.query(
         queryHelper.select(
@@ -27,10 +27,12 @@ exports.getSubCategories = async (category_id) => {
             order_by
         )
     );
-
+    
+    // Handle MySQL2 result format
+    const categories = Array.isArray(foCategoryLists[0]) ? foCategoryLists[0] : foCategoryLists;
     var foCategory = [];
-    if(foCategoryLists.length > 0){
-        foCategoryLists.forEach(foSingleElement => {
+    if(categories.length > 0){
+        categories.forEach(foSingleElement => {
             foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
             if(foSingleElement.image!=""){
                 foSingleElement.thumb = "media/category/thumb/" + foSingleElement.image;
@@ -55,7 +57,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
     var order_by = "t.id desc";
     var foTemplatesLists = await db.query(
         queryHelper.join(
-            't.id,t.planImgName,t.free_paid,t.t_event_date,t.sub_category_id,t.path,t.font_type,t.font_size,t.font_color,t.lable,t.lablebg,t.created_at,t.updated_at,s.id,\
+            't.id,t.planImgName,t.free_paid,t.event_date,t.sub_category_id,t.path,t.font_type,t.font_size,t.font_color,t.lable,t.lablebg,t.created_at,t.updated_at,s.id,\
              s.mslug as cat_slug,IFNULL(t.mask,"") AS mask,t.has_mask,s.mtitle as cat_name,s.plan_auto,t.language',
             'tamplet as t',
             [['sub_categories as s','t.sub_category_id=s.id','left']],
@@ -65,17 +67,19 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
         )
     );
 
+    // Handle MySQL2 result format
+    const templates = Array.isArray(foTemplatesLists[0]) ? foTemplatesLists[0] : foTemplatesLists;
     var foTemplates = [];
-    if(foTemplatesLists.length > 0){
-        foTemplatesLists.forEach(foSingleElement => {
-            foSingleElement.t_event_date = foSingleElement.t_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.t_event_date,'d, F Y'):'';
+    if(templates.length > 0){
+        templates.forEach(foSingleElement => {
+            foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
     
             var plan = 'no';
             var auto = 'yes';
             if(foSingleElement.planImgName!=""){
                 plan = "yes";
-                foSingleElement.thumb = "media/template/plan/thumb/" + foSingleElement.tid+".jpg";
-                foSingleElement.pathB = "media/template/plan/" +foSingleElement.cat_slug+'/'+ foSingleElement.tid+".jpg";
+                foSingleElement.thumb = "media/template/plan/thumb/" + foSingleElement.id+".jpg";
+                foSingleElement.pathB = "media/template/plan/" +foSingleElement.cat_slug+'/'+ foSingleElement.id+".jpg";
             }else{
                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
                     plan = 'yes';
@@ -109,19 +113,21 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
 exports.getAllVideoByCategoryID = async (sub_category_id) => {
     var foVideoLists = await db.query(
         queryHelper.join(
-            'v.id,v.sub_category_id ,v.type,v.free_paid,v.path,v.thumb,v.lable,v.lablebg,v.status,v.created_at,v.updated_at,m.event_date',
+            'v.id,v.sub_category_id ,v.type,v.free_paid,v.path,v.thumb,v.lable,v.lablebg,v.status,v.created_at,v.updated_at,s.event_date',
             'videogif as v',
             [['sub_categories as s','v.sub_category_id=s.id','left']],
             {'v.sub_category_id':sub_category_id,'v.status':1}
         )
     );
 
+    // Handle MySQL2 result format
+    const videos = Array.isArray(foVideoLists[0]) ? foVideoLists[0] : foVideoLists;
     var foVideos = [];
-    if(foVideoLists.length > 0){
-        foVideoLists.forEach(foSingleElement => {
+    if(videos.length > 0){
+        videos.forEach(foSingleElement => {
             foSingleElement.path = foSingleElement.path!=""?'media/videogif/'+foSingleElement.path:'';
             foSingleElement.event_date = commonHelper.formatDate(foSingleElement.event_date);
-            foSingleElement.t_event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
+            foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
             if(foSingleElement.thumb!=""){
                 foSingleElement.thumb = "media/videogif/thumb/" + foSingleElement.thumb;
             }else{
@@ -140,7 +146,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
     var foHomePagePostsLists = await db.query(
         queryHelper.select(
             'id,category_id,title,sequence,status,is_show_on_home,is_new,planImgName,\
-            tid,free_paid,type,p_id,t_event_date,cat_id,path,font_type,font_size,font_color,lable,lablebg,created_at,updated_at,\
+            tid,free_paid,type,p_id,event_date,cat_id,path,font_type,font_size,font_color,lable,lablebg,created_at,updated_at,\
             mid, mslug  as cat_slug, mtitle as cat_name,plan_auto',
             'home_page_category_wise_posts',
             {status:1}
@@ -151,7 +157,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
     if(foHomePagePostsLists.length > 0){
         var foCategoryWisePosts = [];
         foHomePagePostsLists.forEach(foSingleElement => {
-            foSingleElement.t_event_date = foSingleElement.t_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.t_event_date,'d, F Y'):'';
+            foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
 
             var plan = 'no';
             var auto = 'yes';

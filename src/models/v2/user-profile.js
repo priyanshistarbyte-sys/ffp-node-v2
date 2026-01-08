@@ -90,25 +90,28 @@ exports.updateProfile = async (requestBody) => {
 };
 
 exports.getUserProfile = async (userId) => {
-  const where = { id: userId, role: "1" };
+  const where = { id: userId, role: "User" };
   let foUser = await db.query(
     queryHelper.select(
-      "id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_date,updated_date,gst_firm_name,gst_no,owner_name,owner_birth_date,business_anniversary_date,business_category_id",
+      "id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at,gst_firm_name,gst_no,owner_name,owner_birth_date,business_anniversary_date,business_category_id",
       "admin",
       where,
       "",
       1,
     ),
   );
-  if (foUser.length > 0) {
-    foUser = foUser[0];
+  
+  // Handle MySQL2 result format
+  const users = Array.isArray(foUser[0]) ? foUser[0] : foUser;
+  if (users.length > 0) {
+    foUser = users[0];
 
     foUser.last_login = foUser.last_login != "0000-00-00 00:00:00" ? commonHelper.customFormatDate(foUser.last_login, "d/m/Y H:i") : "";
     foUser.gst_firm_name = foUser.gst_firm_name != null ? foUser.gst_firm_name: "";
     foUser.gst_no = foUser.gst_no != null ? foUser.gst_no: "";
     foUser.owner_name = foUser.owner_name != null ? foUser.owner_name: "";
-    foUser.created_date = commonHelper.customFormatDate(foUser.created_date, "d/m/Y H:i");
-    foUser.updated_date = commonHelper.customFormatDate(foUser.updated_date, "d/m/Y H:i");
+    foUser.created_at = commonHelper.customFormatDate(foUser.created_at, "d/m/Y H:i");
+    foUser.updated_at = commonHelper.customFormatDate(foUser.updated_at, "d/m/Y H:i");
     foUser.gender = foUser.gender == 0 ? "Male" : "Female";
     foUser.photo_name2 = `media/logo/${foUser.photo}`;
     foUser.photo_name = foUser.photo;

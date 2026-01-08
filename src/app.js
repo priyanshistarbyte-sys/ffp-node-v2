@@ -1,13 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
-const authRoutes = require('./routes/authentication');
-const categoryRoutes = require('./routes/categories');
-const postRoutes = require('./routes/posts');
-const frameRoutes = require('./routes/frames');
-const familyRoutes = require('./routes/family');
-const statusRoutes = require('./routes/status');
-const otherRoutes = require('./routes/others');
+const routes = require('./routes');
 
 const app = express();
 
@@ -22,13 +16,7 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/frames', frameRoutes);
-app.use('/api/family', familyRoutes);
-app.use('/api/status', statusRoutes);
-app.use('/api/others', otherRoutes);
+app.use('/api', routes);
 
 // Health check
 app.get('/health', (req, res) => {

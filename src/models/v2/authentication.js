@@ -6,7 +6,7 @@ const sms_helper = require('@/helper/sms-helper');
 var md5 = require('md5');
 
 exports.userLogin = (mobile,password,contryCode) => {
-    var where ={ mobile:mobile,password:md5(password+config.SALT),'role':'User' };
+    var where ={ mobile:mobile,password:md5(password+config.SALT),role:'User' };
     return db.query(
         queryHelper.select(
             'id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at',
@@ -18,7 +18,7 @@ exports.userLogin = (mobile,password,contryCode) => {
 }
 
 exports.getPaymentData = async (user_id) => {
-    var where ={ u_id:user_id };
+    var where ={ user_id:user_id };
     var foPaymentsList = await db.query(
         queryHelper.select(
             'id,user_id,amount,date,transactionid,status,packageid,price,month,created_at',
@@ -49,7 +49,7 @@ exports.updateLastLogin = async (user_id) => {
 }
 
 exports.checkIsMobileExist = async (mobile) => {
-    var where ={ mobile:mobile,'role':'User' };
+    var where ={ mobile:mobile,role:'User'};
     var foUser = await db.query(
         queryHelper.select(
             'id',
@@ -58,8 +58,10 @@ exports.checkIsMobileExist = async (mobile) => {
             1
         )
     );
-
-    return foUser.length > 0?true:false;
+    
+    // Handle MySQL2 result format [rows, fields]
+    const users = Array.isArray(foUser[0]) ? foUser[0] : foUser;
+    return users.length > 0;
 }
 
 exports.updatePassword = async (mobile,new_pass) => {
@@ -103,7 +105,7 @@ exports.userRegister = async (request_body) => {
                 'b_website': "",
                 'gender': 1,
                 'address': "",
-                'role': '1',
+                'role': 'User',
                 'status': 1,
                 'ispaid': 0,
                 'expdate': null,
@@ -113,10 +115,11 @@ exports.userRegister = async (request_body) => {
             }
         )
     );
-    var insertId =  insertData.insertId;
+    // Handle MySQL2 result format
+    var insertId = insertData.insertId || (insertData[0] && insertData[0].insertId) || 0;
     if(insertId > 0){
         console.log('sandip------register', request_body.mobile);
-        sms_helper.sms.send_other_sms(request_body.mobile,"welcome","");
+        // sms_helper.sms.send_other_sms(request_body.mobile,"welcome","");
         var update_data = { totalUsers : "totalUsers+1" };
         await db.query(
             "update counter set totalUsers=totalUsers+1"

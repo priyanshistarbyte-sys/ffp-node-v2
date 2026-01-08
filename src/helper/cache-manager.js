@@ -9,7 +9,7 @@ exports.getDataFromCache = async (cacheKey) => {
     var foCacheDetails = {};
 
     try {
-        var fileCache = await fs.readFile("./cache/cache.json", "binary"); 
+        var fileCache = await fs.readFile("./src/cache/cache.json", "binary"); 
         fileCache = JSON.parse(fileCache);
         return fileCache[cacheKey];
     } catch (error) {
@@ -25,9 +25,9 @@ exports.getDataFromCache = async (cacheKey) => {
         /* getNewAdsmobList */
         var foApplicationAd = await db.query(
             queryHelper.select(
-                'app_id,status,adclick,mode',
+                'id,status,adclick,mode',
                 'application_add',
-                ''
+                {}
             )
         );
 
@@ -41,7 +41,7 @@ exports.getDataFromCache = async (cacheKey) => {
                 queryHelper.select(
                     'ads_title,ads_id,ads_type',
                     'ads_api',
-                    {'app_id':foApplicationAd.app_id}
+                    {'id':foApplicationAd.id}
                 )
             );
             
@@ -54,7 +54,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
             var foDialog = await db.query(
                 queryHelper.select(
-                    'd_title,d_description,d_button1,d_button2,d_link,image,d_appversion,d_forcefully,d_other_forcefully,d_isDisplay,d_other_isDisplay,o_type,o_link',
+                    'title,description,button1,button2,link,image,appversion,forcefully,other_forcefully,isDisplay,other_isDisplay,o_type,o_link',
                     'dailog',
                     ''
                 )
@@ -77,7 +77,7 @@ exports.getDataFromCache = async (cacheKey) => {
             queryHelper.select(
                 'id, option_name,value',
                 'setting',
-                ''
+                {}
             )
         );
 
@@ -128,8 +128,8 @@ exports.getDataFromCache = async (cacheKey) => {
         /* Home Screen Slider */
         var foAppSliderData = await db.query(
             queryHelper.select(
-                'cat_title,image,mid,sub,url,sort,festivalDate',
-                'appSlider',
+                'title,image,mid,sub,url,sort,festivalDate',
+                'appslider',
                 {'status':1},
                 "sort asc"
             )
@@ -153,7 +153,7 @@ exports.getDataFromCache = async (cacheKey) => {
             queryHelper.select(
                 '*',
                 'all_main_categories',
-                "",
+                {}
             )
         );
 
@@ -189,7 +189,7 @@ exports.getDataFromCache = async (cacheKey) => {
             queryHelper.select(
                 '*',
                 'subscription_plans',
-                "",
+                {}
             )
         );
 
@@ -234,7 +234,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
 
         /* Write Cache File */
-        var responseJson = await fs.writeFile("./cache/cache.json", JSON.stringify(foCacheDetails), (err) => {
+        var responseJson = await fs.writeFile("./src/cache/cache.json", JSON.stringify(foCacheDetails), (err) => {
             if (err)
                 console.log(err);
             else {
