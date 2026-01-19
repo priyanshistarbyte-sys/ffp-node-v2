@@ -102,12 +102,8 @@ var commonHelper = {
             var x = a[key]; var y = b[key];
             return ((x < y) ? -1 : ((x > y) ? 1 : 0));
         });
-    },
-    'getImageUrl': function(imagePath, folder) {
-        const { API_BASE_URL } = process.env;
-        if (!imagePath || imagePath === '') return '';
-        return `${API_BASE_URL}/storage/uploads/images/${folder}/${imagePath}`;
     }
+   
 }
 
 module.exports = commonHelper;

@@ -66,7 +66,8 @@ exports.getDataFromCache = async (cacheKey) => {
                 );
 
                 if(foDialog.length > 0){
-                    foDialog[0].image = commonHelper.getImageUrl(foDialog[0].image, 'application_dailog_image');
+                    foDialog[0].image = foDialog[0].image && foDialog[0].image !== '' ? 
+                        `${API_BASE_URL}/storage/uploads/images/application_dailog_image/${foDialog[0].image}` : '';
                     foResult.dailog = foDialog[0];
                 }
 
@@ -132,7 +133,8 @@ exports.getDataFromCache = async (cacheKey) => {
                 "aboutUs" : foAllSetting['aboutUs'],
                 "aboutUs" : foAllSetting['aboutUs'],
                 "shareLink" : foAllSetting['sharingLink'],
-                "sharingBanner" : commonHelper.getImageUrl(foAllSetting['sharingBanner'], 'sharingBanner'),
+                "sharingBanner" : foAllSetting['sharingBanner'] && foAllSetting['sharingBanner'] !== '' ? 
+                    `${API_BASE_URL}/storage/uploads/images/sharing_banner/${foAllSetting['sharingBanner']}` : '',
                 "diffview" : foAllSetting['diffview'],
                 "currentDate" : config.ONLY_DATE(),
                 "beforeDaysMakePost":config.BEFORE_DAYS_MAKE_POST(),
@@ -155,51 +157,61 @@ exports.getDataFromCache = async (cacheKey) => {
             )
         );
 
+        console.log('foAppSliderData from DB:', foAppSliderData);
+
         if(foAppSliderData.length > 0){
             var foAppSlider = [];
-            foAppSliderData.forEach(foSingleElement => {
+            // Handle MySQL2 result format
+            const sliderData = Array.isArray(foAppSliderData[0]) ? foAppSliderData[0] : foAppSliderData;
+            sliderData.forEach(foSingleElement => {
                 foSingleElement.festivalDate = commonHelper.formatDate(foSingleElement.festivalDate);
-                foSingleElement.image = commonHelper.getImageUrl(foSingleElement.image, 'app_slider_image');
+                // Handle full path images from database
+                if(foSingleElement.image && foSingleElement.image !== '' && foSingleElement.image !== '0') {
+                    foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+                } else {
+                    foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`;
+                }
                 foAppSlider.push(foSingleElement);
             });
             
+            console.log('Processed foAppSlider:', foAppSlider);
             foCacheDetails.foAppSlider = foAppSlider;
         }
         /* Home Screen Slider */
 
 
         /* Main Category */
-        // var foMainCategoryLists = await db.query(
-        //     queryHelper.select(
-        //         '*',
-        //         'all_main_categories',
-        //         {}
-        //     )
-        // );
+        var foMainCategoryLists = await db.query(
+            queryHelper.select(
+                '*',
+                'all_main_categories',
+                {}
+            )
+        );
 
-        // if(foMainCategoryLists.length > 0){
-        //     var foMainCategories = [];
-        //     foMainCategoryLists.forEach(foSingleElement => {
-        //         if(foSingleElement.sub=="1" || foSingleElement.sub==1){
-        //             foSingleElement.mid = foSingleElement.cid;
-        //             foSingleElement.image = foSingleElement.pathh;
-        //             foSingleElement.thumb = foSingleElement.pathh;
-        //         }else{
-        //             if(foSingleElement.image!=""){
-        //                 foSingleElement.thumb = "media/category/thumb/"+foSingleElement.image
-        //                 foSingleElement.image = "media/category/"+foSingleElement.image
-        //             }else{
-        //                 foSingleElement.thumb = "media/category/notcategoryimg.jpg";
-        //                 foSingleElement.image = "media/category/notcategoryimg.jpg";
-        //             }
-        //         }
-        //         delete foSingleElement.pathh;
-        //         foSingleElement.icon = foSingleElement.icon;
-        //         foMainCategories.push(foSingleElement);
-        //     });
+        if(foMainCategoryLists.length > 0){
+            var foMainCategories = [];
+            foMainCategoryLists.forEach(foSingleElement => {
+                if(foSingleElement.sub=="1" || foSingleElement.sub==1){
+                    foSingleElement.sub_category_id = foSingleElement.category_id;
+                    foSingleElement.image = foSingleElement.image;
+                    foSingleElement.thumb = foSingleElement.image;
+                }else{
+                    if(foSingleElement.image!=""){
+                        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+                        foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+                    }else{
+                        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
+                        foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`;
+                    }
+                }
+                delete foSingleElement.pathh;
+                foSingleElement.icon = foSingleElement.icon;
+                foMainCategories.push(foSingleElement);
+            });
             
-        //     foCacheDetails.foMainCategories = foMainCategories;
-        // }
+            foCacheDetails.foMainCategories = foMainCategories;
+        }
         /* Main Category */
 
 
@@ -209,30 +221,38 @@ exports.getDataFromCache = async (cacheKey) => {
             var foSubPlansLists = await db.query(
                 queryHelper.select(
                     '*',
-                    'subscription_plans',
+                    'subscription_plans_view',
                     {}
                 )
             );
 
-            if(foSubPlansLists.length > 0){
-                var foSubPlansGroupped = [];
+            if (foSubPlansLists.length > 0) {
+
+                var foSubPlansGroupped = {};
+
                 foSubPlansLists.forEach(foSingleElement => {
-                    if(foSubPlansGroupped[foSingleElement.plan_id]===undefined){
+
+                    if (foSubPlansGroupped[foSingleElement.plan_id] === undefined) {
+
                         foSubPlansGroupped[foSingleElement.plan_id] = {
-                            "plan_id":(foSingleElement.plan_id || '').toString(),
-                            "month":(foSingleElement.month || '').toString(),
-                            "terms":(foSingleElement.month || '') +" Month",
-                            "gst":" GST Included",
-                            "plan_name":foSingleElement.plan_name || '',
-                            "price":(foSingleElement.price || '').toString(),
-                            "discount_price":(foSingleElement.discount_price || '').toString(),
-                            "special_title":foSingleElement.special_title || '',
-                            "status":(foSingleElement.status || '').toString(),
-                            "sequence":foSingleElement.sequence || 0,
-                            "created_at":foSingleElement.created_at || '',
-                            "description":[]
+                            "plan_id": (foSingleElement.plan_id || '').toString(),
+                            "duration": (foSingleElement.duration || '').toString(),
+                            "duration_type": foSingleElement.duration_type || '',
+                            "terms": `${foSingleElement.duration || ''} ${foSingleElement.duration_type || ''}`,
+                            "gst": " GST Included",
+                            "plan_name": foSingleElement.plan_name || '',
+                            "price": (foSingleElement.price || '').toString(),
+                            "discount_price": (foSingleElement.discount_price || '').toString(),
+                            "discount": (foSingleElement.discount || '').toString(),
+                            "special_title": foSingleElement.special_title || '',
+                            "is_free": (foSingleElement.is_free || 0).toString(),
+                            "status": (foSingleElement.status || '').toString(),
+                            "sequence": foSingleElement.sequence || 0,
+                            "created_at": foSingleElement.created_at || '',
+                            "description": []
                         };
                     }
+
                     foSubPlansGroupped[foSingleElement.plan_id].description.push({
                         "sub_dis_id": (foSingleElement.sub_dis_id || '').toString(),
                         "plan_id": (foSingleElement.plan_id || '').toString(),
@@ -240,23 +260,18 @@ exports.getDataFromCache = async (cacheKey) => {
                         "title": foSingleElement.title || ''
                     });
                 });
-                
-                var foSubscriptionPlans = [];
-                foSubPlansGroupped.forEach(foSingleElement =>{
-                    if(foSingleElement!=null){
-                        foSubscriptionPlans.push(foSingleElement);
-                    }
-                });
-                
-                foCacheDetails.foSubscriptionPlans = commonHelper.sort_by_key(foSubscriptionPlans,'sequence');
+
+                var foSubscriptionPlans = Object.values(foSubPlansGroupped);
+
+                foCacheDetails.foSubscriptionPlans =
+                    commonHelper.sort_by_key(foSubscriptionPlans, 'sequence');
             }
         } catch (error) {
             console.log('Error in subscription plans:', error.message);
             foCacheDetails.foSubscriptionPlans = [];
         }
+
         /* Subsctiption Plans */
-
-
 
         /* Write Cache File */
         var responseJson = await fs.writeFile("./src/cache/cache.json", JSON.stringify(foCacheDetails), (err) => {
