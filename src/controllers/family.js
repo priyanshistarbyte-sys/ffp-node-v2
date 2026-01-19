@@ -6,15 +6,22 @@ const upload = require("@/helper/upload-helper");
 const fileUpload = require("@/utils/fileUpload");
 
 const model = require(`@/models/${config.api_version}/family`);
+const { API_BASE_URL } = process.env;
 
 exports.getFamilyCategories = async function (req, res) {
   const foFamilyCatLists = await model.getFamilyCategories();
-  const foFamilyCat = foFamilyCatLists?.map((foSingleElement) => {
-    const thumb = foSingleElement.image !== "" ? `media/category/thumb/${foSingleElement.image}` : "";
-    const image = foSingleElement.image !== "" ? `media/category/${foSingleElement.image}` : "";
-    return {
-      ...foSingleElement, thumb, image, sub: 0,
-    };
+  
+  const foFamilyCat = [];
+  foFamilyCatLists?.forEach((foSingleElement) => {
+    Object.values(foSingleElement).forEach((record) => {
+      if (record && typeof record === 'object' && record.id) {
+        const thumb = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
+        const image = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
+        foFamilyCat.push({
+          ...record, thumb, image, sub: 0,
+        });
+      }
+    });
   });
 
   const responseJson = {

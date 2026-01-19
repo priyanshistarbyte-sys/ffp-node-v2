@@ -5,6 +5,7 @@ const cacheManager = require("@/helper/cache-manager");
 
 const model = require(`@/models/${config.api_version}/posts`);
 const categories = require(`@/models/${config.api_version}/categories`);
+const { API_BASE_URL } = process.env;
 
 exports.getHomeScreenData = async function (req, res) {
   /* Get Today Posts */
@@ -55,18 +56,19 @@ exports.getHomeScreenData = async function (req, res) {
     foUpComingPostsLists.forEach((foSingleElement) => {
       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
       if (foSingleElement.image != "") {
-        foSingleElement.thumb = `media/category/thumb/${foSingleElement.image}`;
-        foSingleElement.image = `media/category/${foSingleElement.image}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+        foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+
       } else {
-        foSingleElement.image = "media/category/notcategoryimg.jpg";
-        foSingleElement.thumb = "media/category/notcategoryimg.jpg";
+        foSingleElement.image =  `${API_BASE_URL}/assets/images/default.jpg`; 
+        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
       }
       // if(foSingleElement.plan_auto==null){
       //     foSingleElement.plan_auto = "1";
       // }
       foUpComingPosts.push(foSingleElement);
     });
-  }
+  }   
   /* Get UpComing Posts */
 
   /* Today Video Posts */
@@ -78,9 +80,9 @@ exports.getHomeScreenData = async function (req, res) {
       foSingleElement.event_date = commonHelper.formatDate(foSingleElement.event_date);
       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
       if (foSingleElement.thumb != "") {
-        foSingleElement.thumb = `media/videogif/thumb/${foSingleElement.thumb}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.thumb}`;
       } else {
-        foSingleElement.thumb = "media/videogif/thumb/novideo.jpg";
+        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
       }
       foTodayVideo.push(foSingleElement);
     });
@@ -128,15 +130,15 @@ exports.getTodayPosts = async function (req, res) {
         if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
           plan = "yes";
           auto = "no";
-          foSingleElement.pathB = `media/template/${foSingleElement.path}`;
+          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         } else {
           plan = "no";
-          foSingleElement.pathB = `media/template/${foSingleElement.path}`;
+          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         }
-        foSingleElement.thumb = `media/template/thumb/${foSingleElement.path}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`; 
       }
-      foSingleElement.automaticTempB = `media/template/${foSingleElement.path}`;
-      foSingleElement.mask = `media/template/${foSingleElement.mask}`;
+      foSingleElement.automaticTempB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
+      foSingleElement.mask =  `${API_BASE_URL}/storage/${foSingleElement.mask}`;
       foSingleElement.plan = plan;
       foSingleElement.auto = auto;
 
@@ -157,13 +159,13 @@ exports.getTodayPosts = async function (req, res) {
   const foTodayVideo = [];
   if (foTodayVideoLists.length > 0) {
     foTodayVideoLists.forEach((foSingleElement) => {
-      foSingleElement.path = foSingleElement.path != "" ? `media/videogif/${foSingleElement.path}` : "";
+      foSingleElement.path = foSingleElement.path != "" ?  `${API_BASE_URL}/storage/${foSingleElement.path}`: "";
       foSingleElement.event_date = commonHelper.formatDate(foSingleElement.event_date);
       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
       if (foSingleElement.thumb != "") {
-        foSingleElement.thumb = `media/videogif/thumb/${foSingleElement.thumb}`;
+        foSingleElement.thumb =  `${API_BASE_URL}/storage/${foSingleElement.thumb}`; 
       } else {
-        foSingleElement.thumb = "media/videogif/thumb/novideo.jpg";
+        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
       }
       foTodayVideo.push(foSingleElement);
     });
@@ -190,11 +192,11 @@ exports.getUpcomingPosts = async function (req, res) {
     foUpComingPostsLists.forEach((foSingleElement) => {
       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
       if (foSingleElement.image != "") {
-        foSingleElement.thumb = `media/category/thumb/${foSingleElement.image}`;
-        foSingleElement.image = `media/category/${foSingleElement.image}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+        foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
       } else {
-        foSingleElement.thumb = "media/category/notcategoryimg.jpg";
-        foSingleElement.image = "media/category/notcategoryimg.jpg";
+        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`; 
+        foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`; 
       }
       // if(foSingleElement.plan_auto==null){
       //     foSingleElement.plan_auto = "1";

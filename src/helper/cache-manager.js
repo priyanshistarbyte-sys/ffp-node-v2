@@ -4,6 +4,8 @@ const queryHelper = require('./query-helper');
 const commonHelper = require('./common-helper');
 const fs = require("fs").promises;
 
+const { API_BASE_URL } = process.env;
+
 exports.getDataFromCache = async (cacheKey) => {
     var fbIsCacheExist = true;
     var foCacheDetails = {};
@@ -22,52 +24,70 @@ exports.getDataFromCache = async (cacheKey) => {
     /* Create New Cache */
     if(fbIsCacheExist===false){
 
-        /* getNewAdsmobList */
-        var foApplicationAd = await db.query(
-            queryHelper.select(
-                'id,status,adclick,mode',
-                'application_add',
-                {}
-            )
-        );
-
-        if(foApplicationAd.length > 0){
-            foApplicationAd = foApplicationAd[0];
-            foApplicationAd.openadd="1";
-            foApplicationAd.backadd="1";
-
-            /* Get Add Type */
-            var foAdsListAll = await db.query(
+        try {
+            /* getNewAdsmobList */
+            console.log('Starting getNewAdsmobList query...');
+            var foApplicationAd = await db.query(
                 queryHelper.select(
-                    'ads_title,ads_id,ads_type',
-                    'ads_api',
-                    {'id':foApplicationAd.id}
+                    'id,status,adclick,mode',
+                    'application_add',
+                    {}
                 )
             );
-            
-            var foResult = {google:{},facebook:{},dailog:{}};
-            foAdsListAll.forEach(element => {
-                var type = element.ads_type=="1"?'google' : 'facebook';
-                foResult[type][element.ads_title]=element.ads_id;
-            });
+            console.log('foApplicationAd result:', foApplicationAd);
+
+            if(foApplicationAd.length > 0){
+                foApplicationAd = foApplicationAd[0];
+                foApplicationAd.openadd="1";
+                foApplicationAd.backadd="1";
+
+                /* Get Add Type */
+                var foAdsListAll = await db.query(
+                    queryHelper.select(
+                        'ads_title,ads_id,ads_type',
+                        'ads_api',
+                        {'app_id':foApplicationAd.id}
+                    )
+                );
+                
+                var foResult = {google:{},facebook:{},dailog:{}};
+                foAdsListAll.forEach(element => {
+                    var type = element.ads_type=="1"?'google' : 'facebook';
+                    foResult[type][element.ads_title]=element.ads_id;
+                });
 
 
-            var foDialog = await db.query(
-                queryHelper.select(
-                    'title,description,button1,button2,link,image,appversion,forcefully,other_forcefully,isDisplay,other_isDisplay,o_type,o_link',
-                    'dailog',
-                    ''
-                )
-            );
+                var foDialog = await db.query(
+                    queryHelper.select(
+                        'title,description,button1,button2,link,image,appversion,forcefully,other_forcefully,isDisplay,other_isDisplay,o_type,o_link',
+                        'dailog',
+                        {}
+                    )
+                );
 
-            if(foDialog.length > 0){
-                foDialog[0].image = foDialog[0].image!=""?'media/dailog/'+foDialog[0].image:'';
-                foResult.dailog = foDialog[0];
+                if(foDialog.length > 0){
+                    foDialog[0].image = commonHelper.getImageUrl(foDialog[0].image, 'application_dailog_image');
+                    foResult.dailog = foDialog[0];
+                }
+
+                foApplicationAd.result = {};
+                foApplicationAd.result = foResult;
+                foCacheDetails.getNewAdsmobList = foApplicationAd;
+            } else {
+                /* No application data found, create default structure */
+                foCacheDetails.getNewAdsmobList = {
+                    openadd: "1",
+                    backadd: "1",
+                    result: {google:{}, facebook:{}, dailog:{}}
+                };
             }
-
-            foApplicationAd.result = {};
-            foApplicationAd.result = foResult;
-            foCacheDetails.getNewAdsmobList = foApplicationAd;
+        } catch (error) {
+            console.log('Error in getNewAdsmobList:', error.message);
+            foCacheDetails.getNewAdsmobList = {
+                openadd: "1",
+                backadd: "1",
+                result: {google:{}, facebook:{}, dailog:{}}
+            };
         }
         /* getNewAdsmobList */
 
@@ -112,7 +132,7 @@ exports.getDataFromCache = async (cacheKey) => {
                 "aboutUs" : foAllSetting['aboutUs'],
                 "aboutUs" : foAllSetting['aboutUs'],
                 "shareLink" : foAllSetting['sharingLink'],
-                "sharingBanner" : foAllSetting['sharingBanner']==""?"":"media/sharingBanner/"+foAllSetting['sharingBanner'],
+                "sharingBanner" : commonHelper.getImageUrl(foAllSetting['sharingBanner'], 'sharingBanner'),
                 "diffview" : foAllSetting['diffview'],
                 "currentDate" : config.ONLY_DATE(),
                 "beforeDaysMakePost":config.BEFORE_DAYS_MAKE_POST(),
@@ -139,7 +159,7 @@ exports.getDataFromCache = async (cacheKey) => {
             var foAppSlider = [];
             foAppSliderData.forEach(foSingleElement => {
                 foSingleElement.festivalDate = commonHelper.formatDate(foSingleElement.festivalDate);
-                foSingleElement.image = "media/slider/"+foSingleElement.image;
+                foSingleElement.image = commonHelper.getImageUrl(foSingleElement.image, 'app_slider_image');
                 foAppSlider.push(foSingleElement);
             });
             
@@ -149,85 +169,90 @@ exports.getDataFromCache = async (cacheKey) => {
 
 
         /* Main Category */
-        var foMainCategoryLists = await db.query(
-            queryHelper.select(
-                '*',
-                'all_main_categories',
-                {}
-            )
-        );
+        // var foMainCategoryLists = await db.query(
+        //     queryHelper.select(
+        //         '*',
+        //         'all_main_categories',
+        //         {}
+        //     )
+        // );
 
-        if(foMainCategoryLists.length > 0){
-            var foMainCategories = [];
-            foMainCategoryLists.forEach(foSingleElement => {
-                if(foSingleElement.sub=="1" || foSingleElement.sub==1){
-                    foSingleElement.mid = foSingleElement.cid;
-                    foSingleElement.image = foSingleElement.pathh;
-                    foSingleElement.thumb = foSingleElement.pathh;
-                }else{
-                    if(foSingleElement.image!=""){
-                        foSingleElement.thumb = "media/category/thumb/"+foSingleElement.image
-                        foSingleElement.image = "media/category/"+foSingleElement.image
-                    }else{
-                        foSingleElement.thumb = "media/category/notcategoryimg.jpg";
-                        foSingleElement.image = "media/category/notcategoryimg.jpg";
-                    }
-                }
-                delete foSingleElement.pathh;
-                foSingleElement.icon = foSingleElement.icon;
-                foMainCategories.push(foSingleElement);
-            });
+        // if(foMainCategoryLists.length > 0){
+        //     var foMainCategories = [];
+        //     foMainCategoryLists.forEach(foSingleElement => {
+        //         if(foSingleElement.sub=="1" || foSingleElement.sub==1){
+        //             foSingleElement.mid = foSingleElement.cid;
+        //             foSingleElement.image = foSingleElement.pathh;
+        //             foSingleElement.thumb = foSingleElement.pathh;
+        //         }else{
+        //             if(foSingleElement.image!=""){
+        //                 foSingleElement.thumb = "media/category/thumb/"+foSingleElement.image
+        //                 foSingleElement.image = "media/category/"+foSingleElement.image
+        //             }else{
+        //                 foSingleElement.thumb = "media/category/notcategoryimg.jpg";
+        //                 foSingleElement.image = "media/category/notcategoryimg.jpg";
+        //             }
+        //         }
+        //         delete foSingleElement.pathh;
+        //         foSingleElement.icon = foSingleElement.icon;
+        //         foMainCategories.push(foSingleElement);
+        //     });
             
-            foCacheDetails.foMainCategories = foMainCategories;
-        }
+        //     foCacheDetails.foMainCategories = foMainCategories;
+        // }
         /* Main Category */
 
 
 
         /* Subsctiption Plans */
-        var foSubPlansLists = await db.query(
-            queryHelper.select(
-                '*',
-                'subscription_plans',
-                {}
-            )
-        );
+        try {
+            var foSubPlansLists = await db.query(
+                queryHelper.select(
+                    '*',
+                    'subscription_plans',
+                    {}
+                )
+            );
 
-        if(foSubPlansLists.length > 0){
-            var foSubPlansGroupped = [];
-            foSubPlansLists.forEach(foSingleElement => {
-                if(foSubPlansGroupped[foSingleElement.plan_id]===undefined){
-                    foSubPlansGroupped[foSingleElement.plan_id] = {
-                        "plan_id":foSingleElement.plan_id.toString(),
-                        "month":foSingleElement.month.toString(),
-                        "terms":foSingleElement.month.toString() +" Month",
-                        "gst":" GST Included",
-                        "plan_name":foSingleElement.plan_name,
-                        "price":foSingleElement.price.toString(),
-                        "discount_price":foSingleElement.discount_price.toString(),
-                        "special_title":foSingleElement.special_title,
-                        "status":foSingleElement.status.toString(),
-                        "sequence":foSingleElement.sequence,
-                        "created_at":foSingleElement.created_at,
-                        "description":[]
-                    };
-                }
-                foSubPlansGroupped[foSingleElement.plan_id].description.push({
-                    "sub_dis_id": foSingleElement.sub_dis_id.toString(),
-                    "plan_id": foSingleElement.plan_id.toString(),
-                    "sign": foSingleElement.sign.toString(),
-                    "title": foSingleElement.title
+            if(foSubPlansLists.length > 0){
+                var foSubPlansGroupped = [];
+                foSubPlansLists.forEach(foSingleElement => {
+                    if(foSubPlansGroupped[foSingleElement.plan_id]===undefined){
+                        foSubPlansGroupped[foSingleElement.plan_id] = {
+                            "plan_id":(foSingleElement.plan_id || '').toString(),
+                            "month":(foSingleElement.month || '').toString(),
+                            "terms":(foSingleElement.month || '') +" Month",
+                            "gst":" GST Included",
+                            "plan_name":foSingleElement.plan_name || '',
+                            "price":(foSingleElement.price || '').toString(),
+                            "discount_price":(foSingleElement.discount_price || '').toString(),
+                            "special_title":foSingleElement.special_title || '',
+                            "status":(foSingleElement.status || '').toString(),
+                            "sequence":foSingleElement.sequence || 0,
+                            "created_at":foSingleElement.created_at || '',
+                            "description":[]
+                        };
+                    }
+                    foSubPlansGroupped[foSingleElement.plan_id].description.push({
+                        "sub_dis_id": (foSingleElement.sub_dis_id || '').toString(),
+                        "plan_id": (foSingleElement.plan_id || '').toString(),
+                        "sign": (foSingleElement.sign || '').toString(),
+                        "title": foSingleElement.title || ''
+                    });
                 });
-            });
-            
-            var foSubscriptionPlans = [];
-            foSubPlansGroupped.forEach(foSingleElement =>{
-                if(foSingleElement!=null){
-                    foSubscriptionPlans.push(foSingleElement);
-                }
-            });
-            
-            foCacheDetails.foSubscriptionPlans = commonHelper.sort_by_key(foSubscriptionPlans,'sequence');
+                
+                var foSubscriptionPlans = [];
+                foSubPlansGroupped.forEach(foSingleElement =>{
+                    if(foSingleElement!=null){
+                        foSubscriptionPlans.push(foSingleElement);
+                    }
+                });
+                
+                foCacheDetails.foSubscriptionPlans = commonHelper.sort_by_key(foSubscriptionPlans,'sequence');
+            }
+        } catch (error) {
+            console.log('Error in subscription plans:', error.message);
+            foCacheDetails.foSubscriptionPlans = [];
         }
         /* Subsctiption Plans */
 

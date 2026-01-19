@@ -2,7 +2,7 @@ const db = require('@/config/database');
 const config = require('@/config/config');
 const queryHelper = require('@/helper/query-helper');
 const commonHelper = require('@/helper/common-helper');
-
+const { API_BASE_URL } = process.env;
 
 exports.getSubCategories = async (category_id) => {
     var startDate = new Date();
@@ -21,7 +21,7 @@ exports.getSubCategories = async (category_id) => {
 
     var foCategoryLists = await db.query(
         queryHelper.select(
-            'id, category_id, image, event_date, mtitle, mslug, status, lable, lablebg, noti_banner, noti_quote, plan_auto, created_at, updated_at',
+            'id, category_id, is_child, parent_category, image, event_date, mtitle, mslug, status, lable, lablebg, noti_banner, noti_quote, plan_auto, created_at, updated_at',
             'sub_categories',
             where,
             order_by
@@ -34,12 +34,14 @@ exports.getSubCategories = async (category_id) => {
     if(categories.length > 0){
         categories.forEach(foSingleElement => {
             foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
+            // console.log(API_BASE_URL);
+            
             if(foSingleElement.image!=""){
-                foSingleElement.thumb = "media/category/thumb/" + foSingleElement.image;
-                foSingleElement.image = "media/category/" + foSingleElement.image;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.image;
+                foSingleElement.image = API_BASE_URL + '/storage/' + foSingleElement.image;
             }else{
-                foSingleElement.thumb = "media/category/notcategoryimg.jpg";
-                foSingleElement.image = "media/category/notcategoryimg.jpg";
+                foSingleElement.thumb = API_BASE_URL + '/storage/';
+                foSingleElement.image = API_BASE_URL + '/storage/';
             }
             foSingleElement.sub = "0";
             foSingleElement.cat_title = foSingleElement.mtitle;
@@ -78,21 +80,21 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
             var auto = 'yes';
             if(foSingleElement.planImgName!=""){
                 plan = "yes";
-                foSingleElement.thumb = "media/template/plan/thumb/" + foSingleElement.id+".jpg";
-                foSingleElement.pathB = "media/template/plan/" +foSingleElement.cat_slug+'/'+ foSingleElement.id+".jpg";
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.id+".jpg";
+                foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.id+".jpg";
             }else{
                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
                     plan = 'yes';
                     auto = 'no';
-                    foSingleElement.pathB = "media/template/" + foSingleElement.path;
+                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
                 }else{
                     plan = 'no';
-                    foSingleElement.pathB = "media/template/" + foSingleElement.path;
+                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
                 }
-                foSingleElement.thumb = "media/template/thumb/" + foSingleElement.path;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
-            foSingleElement.automaticTempB = "media/template/" + foSingleElement.path;
-            foSingleElement.mask = `media/template/${foSingleElement.mask}`;
+            foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
+            foSingleElement.mask = API_BASE_URL + `/storage/${foSingleElement.mask}`;
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
     
@@ -125,13 +127,13 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
     var foVideos = [];
     if(videos.length > 0){
         videos.forEach(foSingleElement => {
-            foSingleElement.path = foSingleElement.path!=""?'media/videogif/'+foSingleElement.path:'';
+            foSingleElement.path = foSingleElement.path!=""?API_BASE_URL + '/storage/'+foSingleElement.path:'';
             foSingleElement.event_date = commonHelper.formatDate(foSingleElement.event_date);
             foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
             if(foSingleElement.thumb!=""){
-                foSingleElement.thumb = "media/videogif/thumb/" + foSingleElement.thumb;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.thumb;
             }else{
-                foSingleElement.thumb = "media/videogif/thumb/novideo.jpg";
+                foSingleElement.thumb = API_BASE_URL + '/storage/';
             }
             foVideos.push(foSingleElement);
         });
@@ -163,20 +165,20 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             var auto = 'yes';
             if(foSingleElement.planImgName!=""){
                 plan = "yes";
-                foSingleElement.thumb = "media/template/plan/thumb/" + foSingleElement.tid+".jpg";
-                foSingleElement.pathB = "media/template/plan/" +foSingleElement.cat_slug+'/'+ foSingleElement.tid+".jpg";
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.tid+".jpg";
+                foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.tid+".jpg";
             }else{
                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
                     plan = 'yes';
                     auto = 'no';
-                    foSingleElement.pathB = "media/template/" + foSingleElement.path;
+                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
                 }else{
                     plan = 'no';
-                    foSingleElement.pathB = "media/template/" + foSingleElement.path;
+                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
                 }
-                foSingleElement.thumb = "media/template/thumb/" + foSingleElement.path;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
-            foSingleElement.automaticTempB = "media/template/" + foSingleElement.path;
+            foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
 
@@ -197,7 +199,6 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             delete foSingleElement.title;
             delete foSingleElement.id;
             delete foSingleElement.is_new;
-            delete foSingleElement.sequence;
             delete foSingleElement.sequence;
             delete foSingleElement.is_show_on_home;
             delete foSingleElement.category_id;

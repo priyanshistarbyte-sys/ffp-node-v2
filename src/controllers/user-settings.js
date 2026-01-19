@@ -246,7 +246,7 @@ exports.applyCouponCode = async function (req, res) {
       amount: "0.00",
       date: config.ONLY_DATE(),
       transactionid: "",
-      status: foActiveCoupon[0].c_title,
+      status: foActiveCoupon[0].title,
       packageid: "1",
       price: "0.00",
       month: "0",
@@ -257,7 +257,7 @@ exports.applyCouponCode = async function (req, res) {
     /* Coupon code log */
     const foCouponData = {
       user_id: req.body.user_id,
-      coupon_id: foActiveCoupon[0].coupon_id,
+      coupon_id: foActiveCoupon[0].id,
       created_at: config.CURRENT_DATE(),
     };
     await model.insertData("coupon_code_appy_user", foCouponData);
@@ -272,7 +272,7 @@ exports.applyCouponCode = async function (req, res) {
     await model.updatePaymentData(userPaidData, req.body.user_id);
 
     /* Update Coupon Use Count */
-    await model.updateCouponUseCount(foActiveCoupon[0].coupon_id);
+    await model.updateCouponUseCount(foActiveCoupon[0].id);
     responseJson.message = "This coupon has been successfully activated";
   } else {
     responseJson.status = false;

@@ -110,7 +110,7 @@ exports.syncFirebaseToken = async function (req, res) {
     if (foTokenExist.length > 0) {
       /* Update Token Data */
       delete userToken.user_id;
-      await userDetailModel.updateUserToken(userToken, { n_id: foTokenExist[0].n_id });
+      await userDetailModel.updateUserToken(userToken, { id: foTokenExist[0].id });
     } else {
       /* Add Token Data */
       await userDetailModel.insertUserToken(userToken);
@@ -120,7 +120,7 @@ exports.syncFirebaseToken = async function (req, res) {
     const foTokenExist = await userDetailModel.checkTokenWithUserOrDevice(req.body.user_id, req.body.device_id);
     if (foTokenExist.length > 0) {
       /* Update Token Data */
-      await userDetailModel.updateUserToken(userToken, { n_id: foTokenExist[0].n_id });
+      await userDetailModel.updateUserToken(userToken, { id: foTokenExist[0].id });
     } else {
       /* Add Token Data */
       await userDetailModel.insertUserToken(userToken);

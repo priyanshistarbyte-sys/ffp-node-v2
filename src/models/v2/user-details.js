@@ -39,7 +39,7 @@ exports.planExpired = (user_id) => {
 exports.checkUserTokenExistWithDevice = async (where) => {
     var exist = await db.query(
         queryHelper.select(
-            'n_id',
+            'id',
             'notification',
             where
         )
@@ -56,7 +56,7 @@ exports.checkUserTokenExistWithDevice = async (where) => {
 
 exports.checkTokenWithUserOrDevice = async (user_id,device_id) => {
     var exist = await db.query(
-        'select n_id from notification where user_id="'+user_id+'" OR device_id="'+device_id+'"'
+        'select id from notification where user_id="'+user_id+'" OR device_id="'+device_id+'"'
     );
     if(exist.length > 1){
         await db.query(

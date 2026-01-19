@@ -4,16 +4,21 @@ const queryHelper = require('@/helper/query-helper');
 const commonHelper = require('@/helper/common-helper');
 const sms_helper = require('@/helper/sms-helper');
 
-exports.userPurchasePackage = async (user_id,amount,transactionid,status,packageid,other = {}) => {
-
-    let responseJson = { status: true, message: "" };
+exports.userPurchasePackage = async (
+    user_id,
+    amount,
+    transactionid,
+    status,
+    packageid,
+    other = {}
+) => {
 
     /* ----------------------------------------
        Get Subscription Plan Details
     -----------------------------------------*/
-    const subscriptionPlan = await db.query(
+    const [subscriptionPlans] = await db.query(
         queryHelper.select(
-            'id, plan_name, duration, duration_type, price, is_free',
+            'id, plan_name, duration, duration_type, price,discount,is_free',
             'subscription_plans',
             { id: packageid },
             '',
@@ -21,19 +26,19 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
         )
     );
 
-    if (!subscriptionPlan || subscriptionPlan.length === 0) {
+    if (!subscriptionPlans || subscriptionPlans.length === 0) {
         return {
             status: false,
             message: 'Invalid subscription plan'
         };
     }
 
-    const plan = subscriptionPlan[0];
+    const plan = subscriptionPlans[0]; // ✅ now a proper object
 
     /* ----------------------------------------
        Check User Previous Plans (Trial Used?)
     -----------------------------------------*/
-    const userOldPlans = await db.query(
+    const [userOldPlans] = await db.query(
         queryHelper.select(
             'id',
             'payments',
@@ -41,7 +46,7 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
         )
     );
 
-    if (userOldPlans.length > 0 && plan.is_free == 1) {
+    if (userOldPlans.length > 0 && Number(plan.is_free) === 1) {
         return {
             status: false,
             message: 'Sorry, You are not eligible for a trial plan. Thank you'
@@ -51,7 +56,7 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
     /* ----------------------------------------
        Get User Current Plan Status
     -----------------------------------------*/
-    const userPlanData = await db.query(
+    const [userPlanData] = await db.query(
         queryHelper.select(
             'planStatus, ispaid, expdate',
             'admin',
@@ -66,8 +71,8 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
 
     if (
         userPlanData.length > 0 &&
-        userPlanData[0].planStatus == 2 &&
-        userPlanData[0].ispaid == 1 &&
+        Number(userPlanData[0].planStatus) === 2 &&
+        Number(userPlanData[0].ispaid) === 1 &&
         new Date(userPlanData[0].expdate) > new Date()
     ) {
         expiryDate = new Date(userPlanData[0].expdate);
@@ -76,12 +81,12 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
     /* ----------------------------------------
        Calculate Expiry Date
     -----------------------------------------*/
-    if (plan.is_free == 1) {
+    if (Number(plan.is_free) === 1) {
         // Trial plan → 7 days
         expiryDate.setDate(expiryDate.getDate() + 7);
         planStatus = 1;
     } else {
-        const duration = parseInt(plan.duration);
+        const duration = parseInt(plan.duration, 10);
 
         switch (plan.duration_type) {
             case 'day':
@@ -117,6 +122,13 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
     };
 
     /* ----------------------------------------
+       Calculate Discounted Price
+    -----------------------------------------*/
+    const discountedPrice = plan.discount 
+        ? plan.price - (plan.price * plan.discount / 100)
+        : plan.price;
+
+    /* ----------------------------------------
        Prepare Payment Log
     -----------------------------------------*/
     const paymentLog = {
@@ -124,11 +136,9 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
         amount: amount,
         date: config.ONLY_DATE(),
         transactionid: transactionid,
-        status: status,
+        status: plan.plan_name,
         packageid: packageid,
-        price: plan.price,
-        duration: plan.duration,
-        duration_type: plan.duration_type,
+        price: discountedPrice,
         referral_code: other.referral_code || null,
         created_at: config.CURRENT_DATE()
     };
@@ -136,7 +146,7 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
     /* ----------------------------------------
        Handle Trial vs Paid Payment
     -----------------------------------------*/
-    if (plan.is_free == 1) {
+    if (Number(plan.is_free) === 1) {
 
         await db.query(
             queryHelper.update('admin', userPaidData, { id: user_id })
@@ -149,7 +159,7 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
     } else {
 
         /* Prevent duplicate transaction */
-        const duplicateTxn = await db.query(
+        const [duplicateTxn] = await db.query(
             queryHelper.select(
                 'id',
                 'payments',
@@ -168,7 +178,7 @@ exports.userPurchasePackage = async (user_id,amount,transactionid,status,package
             );
 
             /* Send SMS */
-            const userMobile = await db.query(
+            const [userMobile] = await db.query(
                 queryHelper.select(
                     'mobile',
                     'admin',

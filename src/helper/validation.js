@@ -3,11 +3,15 @@ const { ffp_send_response } = require("./security")
 
 
 const validate =  (requestedFields, requeiredFields) => {
+    if (!requestedFields) {
+        return ['Request body is required'];
+    }
+    
     let fields  = requeiredFields.split(',');
     let errors = [];
     fields?.forEach(element => {
         if(element=="user_id_not_0"){
-            if(!(parseInt(requestedFields['user_id']) > 0)){
+            if(!requestedFields['user_id'] || !(parseInt(requestedFields['user_id']) > 0)){
                 errors.push('User Id must be grater then 0');
             }
         }else if(element=="user_id"){

@@ -31,14 +31,17 @@ exports.deleteAccount = async (number) => {
     return true;
 }
 
-exports.checkExistingComplain = (user_id) => {
-    return db.query(
+exports.checkExistingComplain = async (user_id) => {
+    const result = await db.query(
         queryHelper.select(
             'id',
             'complain',
             {'user_id':user_id,"status !=":3}
         )
     );
+    // Handle MySQL2 result format [rows, fields]
+    const complaints = Array.isArray(result[0]) ? result[0] : result;
+    return complaints;
 }
 
 
@@ -57,7 +60,8 @@ exports.insertComplain = async (request_body) => {
             }
         )
     );
-    var lastInsert = insert.insertId;
+    // Handle MySQL2 result format
+    var lastInsert = insert.insertId || insert[0].insertId;
     var compaignId = 'FFP-'+lastInsert.toString().padStart(7, "0");
     console.log(compaignId);
     
@@ -74,9 +78,13 @@ exports.getUserComplains  = async (user_id) => {
     var foComapainLists = await db.query(
         queryHelper.select('id,complain_id,user_id,subject,message,reply,remark,status,created_at,updated_at','complain',where,"id")
     );
+    
+    // Handle MySQL2 result format
+    const complaints = Array.isArray(foComapainLists[0]) ? foComapainLists[0] : foComapainLists;
+    
     var foComapain = [];
-    if(foComapainLists.length >  0){
-        foComapainLists.forEach(foSingleElement => {
+    if(complaints.length >  0){
+        complaints.forEach(foSingleElement => {
             console.log("foSingleElement.status",foSingleElement.status);
 
             status = "Pending";
@@ -94,9 +102,12 @@ exports.getUserComplains  = async (user_id) => {
 
 exports.getBusinessDetails  = async (user_id) => {
     var where ={ id:user_id };
-   return db.query(
+    const result = await db.query(
         queryHelper.select('business_name,mobile','admin',where,"",1)
     );
+    // Handle MySQL2 result format
+    const users = Array.isArray(result[0]) ? result[0] : result;
+    return users;
 }
 
 exports.insertUserFeedback = async (request_body) => {
@@ -116,18 +127,18 @@ exports.insertUserFeedback = async (request_body) => {
 exports.getUserTempPost  = async (user_id,temp_id) => {
     var where ={ user_id:user_id,tamp_id:temp_id };
    return db.query(
-        queryHelper.select('post,post_id','makepost',where,"",1)
+        queryHelper.select('post,id','makepost',where,"",1)
     );
 }
 
-exports.addUserPost  = async (image,user_id,temp_id,post_id) => {
+exports.addUserPost  = async (image,user_id,temp_id,id) => {
     await db.query(
         "update counter set totalPosts=totalPosts+1"
     );
     
     const userFilter ={ user_id };
     const userCount = await db.query(
-         queryHelper.select('daily_id','daily_post_count',userFilter,"",1)
+         queryHelper.select('id','daily_post_count',userFilter,"",1)
      );
 
      if(userCount?.length > 0){
@@ -156,7 +167,7 @@ exports.addUserPost  = async (image,user_id,temp_id,post_id) => {
 
 
 
-    if(post_id==0){
+    if(id==0){
         return db.query(
             queryHelper.insert(
                 'makepost',
@@ -170,7 +181,7 @@ exports.addUserPost  = async (image,user_id,temp_id,post_id) => {
             )
         );
     }else{
-        var where ={ post_id:post_id };
+        var where ={ id:id };
         var update_data = { updated_at : config.CURRENT_DATE(),post:image };
         return db.query(
             queryHelper.update('makepost',update_data,where)
@@ -180,24 +191,30 @@ exports.addUserPost  = async (image,user_id,temp_id,post_id) => {
 
 
 exports.getActiveCoupon  = async (coupon) => {
-   var where ={ 'c_code':coupon,'total_qty > total_count_user_apply' : '','start_date <= ':config.CURRENT_DATE(),'end_date >= ':config.CURRENT_DATE(),'status':1 };
-   return db.query(
-        queryHelper.select('coupon_id,total_days,c_title','coupon_code',where,"",1)
+   var where ={ 'code':coupon,'total_qty > total_count_user_apply' : '','start_date <= ':config.CURRENT_DATE(),'end_date >= ':config.CURRENT_DATE(),'status':1 };
+   const result = await db.query(
+        queryHelper.select('id,total_days,title','coupon_code',where,"",1)
    );
+   // Handle MySQL2 result format
+   return Array.isArray(result[0]) ? result[0] : result;
 }
 
 exports.checkUserPaid  = async (user_id) => {
-   var where ={ 'ispaid':0,'expdate' : null,'planStatus':null,'id':user_id,'role':'1' };
-   return db.query(
+   var where ={ 'ispaid':0,'expdate' : null,'planStatus':null,'id':user_id,'role':'User' };
+   const result = await db.query(
         queryHelper.select('id','admin',where,"",1)
    );
+   // Handle MySQL2 result format
+   return Array.isArray(result[0]) ? result[0] : result;
 }
 
 
 exports.insertData = async (tbl_name,foPaymentData) => {
-    return db.query(
+    const result = await db.query(
         queryHelper.insert(tbl_name,foPaymentData)
     );
+    // Handle MySQL2 result format
+    return Array.isArray(result[0]) ? result[0] : result;
 }
 
 exports.updatePaymentData = async (foData,fiUserId) => {
@@ -206,8 +223,8 @@ exports.updatePaymentData = async (foData,fiUserId) => {
     );
 }
 
-exports.updateCouponUseCount = async (coupon_id) => {
+exports.updateCouponUseCount = async (id) => {
     return db.query(
-        "update coupon_code set total_count_user_apply=total_count_user_apply+1 where coupon_id='"+coupon_id+"'"
+        "update coupon_code set total_count_user_apply=total_count_user_apply+1 where id='"+id+"'"
     );
 }

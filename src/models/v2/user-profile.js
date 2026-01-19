@@ -8,7 +8,7 @@ const fileUpload = require("@/utils/fileUpload");
 
 exports.updateProfile = async (requestBody) => {
   const where = { id: requestBody.user_id };
-  const updateData = { updated_date: config.CURRENT_DATE() };
+  const updateData = { updated_at: config.CURRENT_DATE() };
 
   if (requestBody.business_name !== undefined) {
     updateData.business_name = requestBody.business_name.replace(/"|'/g, "");
@@ -126,7 +126,7 @@ exports.getUserProfile = async (userId) => {
 exports.getUserPosts = async (userId) => {
   const where = { user_id: userId };
   const foPostsLists = await db.query(
-    queryHelper.select("post,created_at", "makepost", where, "post_id desc"),
+    queryHelper.select("post,created_at", "makepost", where, "id desc"),
   );
   const foPosts = [];
   if (foPostsLists.length > 0) {
@@ -142,7 +142,7 @@ exports.getUserPosts = async (userId) => {
 
 exports.uploadLogo = async (requestBody) => {
   const where = { id: requestBody.user_id };
-  const updateData = { updated_date: config.CURRENT_DATE() };
+  const updateData = { updated_at: config.CURRENT_DATE() };
 
   const logoname = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
   if (logoname[0].photo != "") {

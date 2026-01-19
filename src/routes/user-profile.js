@@ -1,6 +1,5 @@
 const express = require('express');
 const router =  express.Router();
-const globalConfiguration = require('@/config/config');
 
 var profile = require('@/controllers/user-profile');
 
