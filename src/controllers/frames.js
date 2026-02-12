@@ -116,3 +116,62 @@ exports.getSubFrames = async function (req, res) {
 
   res.send(securityHelper.ffp_send_response(req, responseJson));
 };
+
+
+exports.addCustomFrames = async function (req, res) {
+  try {
+    /* Validate Request */
+    const errors = validation.validate(req.body, "user_id_not_0,frame_name,image");
+    if (errors.length > 0) {
+      return validation.errorMessage(req, res, errors);
+    }
+
+    const extension = req.body.extestion || req.body.extension || "png";
+    
+    if (!req.body.image || !req.body.image.includes('base64')) {
+      return res.send(securityHelper.ffp_send_response(req, {
+        status: false,
+        message: "Base64 image is required",
+        data: [],
+      }));
+    }
+
+    const storagePath = "storage/uploads/images/customframe/";
+    const dbPath = "uploads/images/customframe/";
+
+    // Upload base64 image
+    const fsImageName = require('@/helper/upload-helper').getFileName(extension, req.body.user_id);
+    const fullPath = config.FILE_UPLOAD_PATH + storagePath + fsImageName;
+    
+    await require('@/helper/upload-helper').uploadBase64Image(fullPath, req.body.image, extension);
+
+    // Store in database
+    const frameData = {
+      user_id: req.body.user_id,
+      frame_name: req.body.frame_name,
+      image: dbPath + fsImageName,
+      free_paid: req.body.free_paid || 1,
+      status: req.body.status || 1,
+      user_customize: 1,
+      created_at:config.CURRENT_DATE(),
+      updated_at:config.CURRENT_DATE(),
+    };
+
+    await frameModel.addCustomFrame(frameData);
+
+    const responseJson = {
+      status: true,
+      message: "Custom frame added successfully!",
+      data: { image: dbPath + fsImageName },
+    };
+
+    res.send(securityHelper.ffp_send_response(req, responseJson));
+  } catch (error) {
+    console.error("Error in addCustomFrames:", error);
+    res.send(securityHelper.ffp_send_response(req, {
+      status: false,
+      message: error.message || "An error occurred",
+      data: [],
+    }));
+  }
+};

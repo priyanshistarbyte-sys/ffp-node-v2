@@ -6,7 +6,7 @@ const commonHelper = require('@/helper/common-helper');
 exports.getUserFrames = (user_id) => {
     return db.query(
         queryHelper.select(
-            'frame_name,image,free_paid,status,data,logosection',
+            'frame_name,image,free_paid,status,user_customize',
             'customframe',
             {'status':1,'user_id':user_id}
         )
@@ -30,5 +30,11 @@ exports.getSubFrames = (frame_id) => {
             'sub_frames',
             {'status':1,"frame_id":frame_id}
         )
+    );
+}
+
+exports.addCustomFrame = (data) => {
+    return db.query(
+        queryHelper.insert('customframe', data)
     );
 }

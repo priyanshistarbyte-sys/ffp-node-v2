@@ -8,36 +8,50 @@ exports.uploadBase64Image = async (base_path, base64_string, extestion, user_id 
   if (user_id != 0) {
     fileName += user_id;
   }
-  let base64ImageString = "";
 
-  if (extestion == "png") {
-    fileName += ".png";
-    base64ImageString = Buffer.from(base64_string.replace("data:image/png;base64,", ""), "base64");
-  } else if (extestion == "jpg" || extestion == "jpeg") {
-    fileName += ".jpg";
-    base64ImageString = Buffer.from(base64_string.replace("data:image/jpeg;base64,", ""), "base64");
+  // Remove data URI prefix if present
+  let base64Data = base64_string;
+  if (base64Data.includes('base64,')) {
+    base64Data = base64Data.split('base64,')[1];
   }
 
-  const filePath = config.FILE_UPLOAD_PATH + base_path + fileName;
+  // Add extension
+  const ext = extestion.toLowerCase();
+  if (ext === "png") {
+    fileName += ".png";
+  } else if (ext === "jpg" || ext === "jpeg") {
+    fileName += ".jpg";
+  } else {
+    fileName += `.${ext}`;
+  }
 
+  const base64ImageString = Buffer.from(base64Data, "base64");
+  const filePath = base_path;
+  const dirPath = path.dirname(filePath);
+
+  await fs.mkdir(dirPath, { recursive: true });
   await fs.writeFile(filePath, base64ImageString);
 
   return fileName;
 };
 
 
-exports.getFileName = (extestion, userId = 0) => {
 
+exports.getFileName = (extestion, userId = 0) => {
   let fileName = commonHelper.customFormatDate(new Date(), "YmdHis");
   if (userId != 0) {
     fileName += userId;
   }
 
-  if (extestion === "png") {
-    fileName += ".png";
+  // Normalize extension
+  const ext = extestion.toLowerCase();
   
-  } else if (extestion === "jpg" || extestion === "jpeg") {
+  if (ext === "png") {
+    fileName += ".png";
+  } else if (ext === "jpg" || ext === "jpeg") {
     fileName += ".jpg";
+  } else {
+    fileName += `.${ext}`;
   }
 
   return fileName;

@@ -125,6 +125,11 @@ exports.userRegister = async function (req, res) {
     responseJson.status = false;
     responseJson.message = "This mobile number is already registered";
   } else {
+    // Add referral_code to request body if provided
+    if (req.body.referral_code) {
+      req.body.referral_code = req.body.referral_code.trim();
+    }
+    
     const fiUserId = await authenticationModel.userRegister(req.body);
     if (fiUserId > 0) {
       responseJson.data = await userProfileModel.getUserProfile(fiUserId);

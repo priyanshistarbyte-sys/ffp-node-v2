@@ -3,6 +3,7 @@ const config = require('@/config/config');
 const queryHelper = require('@/helper/query-helper');
 const commonHelper = require('@/helper/common-helper');
 
+const { API_BASE_URL } = process.env;
 
 exports.getFAQs = async () => {
     var where ={ status:1 };
@@ -48,7 +49,7 @@ exports.getNotifications  = async () => {
     
     var where ={ status:1 };
     var notifications = await db.query(
-        queryHelper.select('id, title, message, image, url, status, created_at','notification_send',where,"id desc")
+        queryHelper.select('id, title, message, image, url, status, page, page_data,  created_at','notification_send',where,"id desc")
     );
     var foNotifications = [];
     if(notifications.length > 0){
@@ -68,7 +69,7 @@ exports.getNotifications  = async () => {
                     );
                         
                     if(singleBanner.length > 0 && singleBanner[0].noti_banner!=null && singleBanner[0].noti_banner!="" ){
-                        foSingleElement.image = "media/category/banner/"+singleBanner[0].noti_banner;
+                        foSingleElement.image =  `${API_BASE_URL}/storage/${singleBanner[0].noti_banner}`;
                     }else{
                         foSingleElement.image = "";    
                     }

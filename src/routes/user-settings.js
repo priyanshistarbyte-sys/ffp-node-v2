@@ -10,8 +10,10 @@ router.post('/get-user-complains',settings.getUserComplains);
 router.post('/user-feedback',settings.submitUserFeedback);
 router.post('/save-user-post',settings.saveUserPost);
 router.post('/make-post-by-user',settings.makeUserPost); 
-
+router.post('/get-coupon-code',settings.getCouponCode);
 router.post('/apply-coupon-code',settings.applyCouponCode);
 
 
 module.exports = router;
+
+

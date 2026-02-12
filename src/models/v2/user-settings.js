@@ -126,9 +126,11 @@ exports.insertUserFeedback = async (request_body) => {
 
 exports.getUserTempPost  = async (user_id,temp_id) => {
     var where ={ user_id:user_id,tamp_id:temp_id };
-   return db.query(
+    const result = await db.query(
         queryHelper.select('post,id','makepost',where,"",1)
     );
+    // Handle MySQL2 result format
+    return Array.isArray(result[0]) ? result[0] : result;
 }
 
 exports.addUserPost  = async (image,user_id,temp_id,id) => {
@@ -227,4 +229,12 @@ exports.updateCouponUseCount = async (id) => {
     return db.query(
         "update coupon_code set total_count_user_apply=total_count_user_apply+1 where id='"+id+"'"
     );
+}
+
+
+exports.getCouponCode = async () => {
+    const result = await db.query(
+        queryHelper.select('id,title,name,code,total_qty,start_date,end_date,total_days,total_count_user_apply,note,status','coupon_code',{ status: 1 },'id')
+    );
+    return Array.isArray(result[0]) ? result[0] : result;
 }

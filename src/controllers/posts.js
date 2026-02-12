@@ -90,8 +90,6 @@ exports.getHomeScreenData = async function (req, res) {
   /* Today Video Posts */
 
   const foHomeSlider = await cacheManager.getDataFromCache("foAppSlider");
-  console.log('foHomeSlider from cache:', foHomeSlider);
-  
 
   /* Home Category Wise Post Lists */
   const foCategoryGroup = await categories.getHomePagePostsListWithCategoryGroup(5);

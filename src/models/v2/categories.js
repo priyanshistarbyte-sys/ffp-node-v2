@@ -21,7 +21,7 @@ exports.getSubCategories = async (category_id) => {
 
     var foCategoryLists = await db.query(
         queryHelper.select(
-            'id, category_id, is_child, parent_category, image, event_date, mtitle, mslug, status, lable, lablebg, noti_banner, noti_quote, plan_auto, created_at, updated_at',
+            'id, category_id, is_child, parent_category, image, event_date, mtitle, mslug, status, lable, lablebg, noti_banner, noti_quote, plan_auto, is_trending, created_at, updated_at',
             'sub_categories',
             where,
             order_by
@@ -60,7 +60,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
     var foTemplatesLists = await db.query(
         queryHelper.join(
             't.id,t.planImgName,t.free_paid,t.event_date,t.sub_category_id,t.path,t.font_type,t.font_size,t.font_color,t.lable,t.lablebg,t.created_at,t.updated_at,s.id,\
-             s.mslug as cat_slug,IFNULL(t.mask,"") AS mask,t.has_mask,s.mtitle as cat_name,s.plan_auto,t.language',
+             s.mslug as cat_slug,IFNULL(t.mask,"") AS mask,t.has_mask,s.mtitle as cat_name,s.plan_auto,s.is_trending,t.language',
             'tamplet as t',
             [['sub_categories as s','t.sub_category_id=s.id','left']],
             where,

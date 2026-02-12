@@ -90,6 +90,18 @@ exports.smsLogUpdate = async (type,mobile,otp) => {
 }
 
 exports.userRegister = async (request_body) => {
+    // Generate 6-digit alphanumeric referral code
+    const generateReferralCode = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    };
+
+    const referralCode = generateReferralCode();
+
     var insertData = await db.query(
         queryHelper.insert(
             'admin',
@@ -110,6 +122,8 @@ exports.userRegister = async (request_body) => {
                 'ispaid': 0,
                 'expdate': null,
                 'planStatus': null,
+                'referral_code': referralCode,
+                'used_referral_code': request_body.referral_code || null,
                 'created_at': config.CURRENT_DATE(),
                 'updated_at': config.CURRENT_DATE()
             }

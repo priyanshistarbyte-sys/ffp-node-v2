@@ -7,15 +7,15 @@ const categoryModel = require(`@/models/${config.api_version}/categories`);
 
 exports.getCategoryWisePostSubCatData = async function (req, res) {
   /* Validate Request */
-  const errors = validation.validate(req.body, "category_id");
+  const errors = validation.validate(req.body, "sub_category_id");
   if (errors.length > 0) {
     return validation.errorMessage(req, res, errors);
   }
 
   // var foSubCategories = await categoryModel.getSubCategories(req.body.c_id);
   const [foTemplates, foAllVideos] = await Promise.all([
-    categoryModel.getLast10ByCategoryIdTemplate(req.body.category_id, req.body.limit),
-    categoryModel.getAllVideoByCategoryID(req.body.category_id),
+    categoryModel.getLast10ByCategoryIdTemplate(req.body.sub_category_id, req.body.limit),
+    categoryModel.getAllVideoByCategoryID(req.body.sub_category_id),
   ]);
 
   const responseJson = {

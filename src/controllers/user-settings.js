@@ -143,48 +143,92 @@ exports.submitUserFeedback = async function (req, res) {
 };
 
 exports.saveUserPost = async function (req, res) {
-  /* Validate Request */
-  const errors = validation.validate(req.body, "user_id_not_0,extestion,temp_id,extestion");
-  if (errors.length > 0) {
+  try {
+    /* Validate Request */
+    const errors = validation.validate(req.body, "user_id_not_0,temp_id");
+    if (errors.length > 0) {
+      return res.send(securityHelper.ffp_send_response(req, {
+        status: false,
+        message: errors.join(", "),
+        data: [],
+      }));
+    }
+
+    // Handle both 'extestion' and 'extension' field names
+    const extension = req.body.extestion || req.body.extension;
+    
+    if (!extension && req.body.image && req.body.image.includes('base64')) {
+      return res.send(securityHelper.ffp_send_response(req, {
+        status: false,
+        message: "Extension field is required for base64 images",
+        data: [],
+      }));
+    }
+
+    const storagePath = "storage/uploads/posts/";
+    const dbPath = "uploads/posts/";
+
+    /* Remove Old File If Exist */
+    const foUserPost = await model.getUserTempPost(req.body.user_id, req.body.temp_id);
+    if (foUserPost.length > 0 && foUserPost[0]?.post) {
+      const oldPost = String(foUserPost[0].post || "");
+      if (oldPost) {
+        const fileName = oldPost.startsWith(dbPath) ? oldPost.replace(dbPath, "") : oldPost;
+        uploadHelper.removeImage(storagePath + fileName);
+      }
+    }
+
+    let fsImageName;
+    
+    // Check if image is base64 or filename
+    if (req.body.image && req.body.image.includes('base64')) {
+      // Upload base64 image
+      fsImageName = uploadHelper.getFileName(extension, req.body.user_id);
+      const fullPath = config.FILE_UPLOAD_PATH + storagePath + fsImageName;
+      
+      await uploadHelper.uploadBase64Image(fullPath, req.body.image, extension);
+
+      await fileUpload.uploadFileToSpace({
+        binaryData: req.body.image,
+        keyPath: `${storagePath}${fsImageName}`,
+        extestion: extension
+      });
+    } else if (req.body.image) {
+      // Image already uploaded, extract filename only
+      const imageStr = String(req.body.image);
+      fsImageName = imageStr.replace(dbPath, "").replace(storagePath, "");
+    } else {
+      return res.send(securityHelper.ffp_send_response(req, {
+        status: false,
+        message: "Image is required",
+        data: [],
+      }));
+    }
+    
+    // Store with uploads/posts/ prefix in database
+    const dbImagePath = dbPath + fsImageName;
+    
+    if (foUserPost.length > 0) {
+      await model.addUserPost(dbImagePath, req.body.user_id, req.body.temp_id, foUserPost[0].id);
+    } else {
+      await model.addUserPost(dbImagePath, req.body.user_id, req.body.temp_id, 0);
+    }
+
+    const responseJson = {
+      status: true,
+      message: "Custom Post successfully update!...",
+      data: dbImagePath,
+    };
+
+    res.send(securityHelper.ffp_send_response(req, responseJson));
+  } catch (error) {
+    console.error("Error in saveUserPost:", error);
     res.send(securityHelper.ffp_send_response(req, {
       status: false,
-      message: errors.join(", "),
+      message: error.message || "An error occurred while saving the post",
       data: [],
     }));
   }
-
-  const path = "media/upload/";
-
-  /* Remove Old File If Exist */
-  const foUserPost = await model.getUserTempPost(req.body.user_id, req.body.temp_id);
-  if (foUserPost.length > 0 && foUserPost[0].post != "") {
-    uploadHelper.removeImage(path + foUserPost[0].post);
-  }
-
- await uploadHelper.uploadBase64Image(path, req.body.image, req.body.extestion, req.body.user_id);
-  
-
-  const fsImageName = uploadHelper.getFileName(req.body.extestion, req.body.user_id);
-
-  await fileUpload.uploadFileToSpace({
-    binaryData: req.body.image,
-    keyPath: `${path}${fsImageName}`,
-    extestion: req.body.extestion
-  });
-  
-  if (foUserPost.length > 0) {
-    await model.addUserPost(fsImageName, req.body.user_id, req.body.temp_id, foUserPost[0].post_id);
-  } else {
-    await model.addUserPost(fsImageName, req.body.user_id, req.body.temp_id, 0);
-  }
-
-  const responseJson = {
-    status: true,
-    message: "Custom Post successfully update!...",
-    data: path + fsImageName,
-  };
-
-  res.send(securityHelper.ffp_send_response(req, responseJson));
 };
 
 exports.makeUserPost = async function (req, res) {
@@ -285,6 +329,18 @@ exports.applyCouponCode = async function (req, res) {
       responseJson.message = "This is not for you, Only for new user..";
     }
   }
+
+  res.send(securityHelper.ffp_send_response(req, responseJson));
+};
+
+exports.getCouponCode = async function (req, res) {
+  const foCouponCodeLists = await model.getCouponCode();
+ 
+  const responseJson = {
+    status: true,
+    message: "Result Successfully get!....",
+    data: foCouponCodeLists.length > 0 ? foCouponCodeLists : [],
+  };
 
   res.send(securityHelper.ffp_send_response(req, responseJson));
 };

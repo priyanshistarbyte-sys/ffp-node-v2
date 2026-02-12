@@ -63,7 +63,8 @@ module.exports = {
 
   /* File Upload Path */
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
-  MAKE_POST_BY_USER_PHP: `${API_BASE_URL}/api/api/makePostByUserNode`,
+  MAKE_POST_BY_USER_PHP: `${API_BASE_URL}/api/v2/make-post-by-user`,
+
 
   /* APP Constants */
   ONLY_DATE() { return commonHelper.formatDate(new Date()); },

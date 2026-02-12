@@ -12,205 +12,244 @@ exports.userPurchasePackage = async (
     packageid,
     other = {}
 ) => {
+    try {
 
-    /* ----------------------------------------
-       Get Subscription Plan Details
-    -----------------------------------------*/
-    const [subscriptionPlans] = await db.query(
-        queryHelper.select(
-            'id, plan_name, duration, duration_type, price,discount,is_free',
-            'subscription_plans',
-            { id: packageid },
-            '',
-            1
-        )
-    );
-
-    if (!subscriptionPlans || subscriptionPlans.length === 0) {
-        return {
-            status: false,
-            message: 'Invalid subscription plan'
-        };
-    }
-
-    const plan = subscriptionPlans[0]; // ✅ now a proper object
-
-    /* ----------------------------------------
-       Check User Previous Plans (Trial Used?)
-    -----------------------------------------*/
-    const [userOldPlans] = await db.query(
-        queryHelper.select(
-            'id',
-            'payments',
-            { user_id: user_id }
-        )
-    );
-
-    if (userOldPlans.length > 0 && Number(plan.is_free) === 1) {
-        return {
-            status: false,
-            message: 'Sorry, You are not eligible for a trial plan. Thank you'
-        };
-    }
-
-    /* ----------------------------------------
-       Get User Current Plan Status
-    -----------------------------------------*/
-    const [userPlanData] = await db.query(
-        queryHelper.select(
-            'planStatus, ispaid, expdate',
-            'admin',
-            { id: user_id },
-            'id ASC',
-            1
-        )
-    );
-
-    let planStatus = 1; // trial
-    let expiryDate = new Date();
-
-    if (
-        userPlanData.length > 0 &&
-        Number(userPlanData[0].planStatus) === 2 &&
-        Number(userPlanData[0].ispaid) === 1 &&
-        new Date(userPlanData[0].expdate) > new Date()
-    ) {
-        expiryDate = new Date(userPlanData[0].expdate);
-    }
-
-    /* ----------------------------------------
-       Calculate Expiry Date
-    -----------------------------------------*/
-    if (Number(plan.is_free) === 1) {
-        // Trial plan → 7 days
-        expiryDate.setDate(expiryDate.getDate() + 7);
-        planStatus = 1;
-    } else {
-        const duration = parseInt(plan.duration, 10);
-
-        switch (plan.duration_type) {
-            case 'day':
-                expiryDate.setDate(expiryDate.getDate() + duration);
-                break;
-
-            case 'month':
-                expiryDate.setMonth(expiryDate.getMonth() + duration);
-                break;
-
-            case 'year':
-                expiryDate.setFullYear(expiryDate.getFullYear() + duration);
-                break;
-
-            default:
-                return {
-                    status: false,
-                    message: 'Invalid plan duration type'
-                };
-        }
-
-        planStatus = 2; // paid plan
-    }
-
-    /* ----------------------------------------
-       Update User Subscription
-    -----------------------------------------*/
-    const userPaidData = {
-        ispaid: "1",
-        expdate: commonHelper.formatDate(expiryDate),
-        planStatus: planStatus,
-        status: "1"
-    };
-
-    /* ----------------------------------------
-       Calculate Discounted Price
-    -----------------------------------------*/
-    const discountedPrice = plan.discount 
-        ? plan.price - (plan.price * plan.discount / 100)
-        : plan.price;
-
-    /* ----------------------------------------
-       Prepare Payment Log
-    -----------------------------------------*/
-    const paymentLog = {
-        user_id: user_id,
-        amount: amount,
-        date: config.ONLY_DATE(),
-        transactionid: transactionid,
-        status: plan.plan_name,
-        packageid: packageid,
-        price: discountedPrice,
-        referral_code: other.referral_code || null,
-        created_at: config.CURRENT_DATE()
-    };
-
-    /* ----------------------------------------
-       Handle Trial vs Paid Payment
-    -----------------------------------------*/
-    if (Number(plan.is_free) === 1) {
-
-        await db.query(
-            queryHelper.update('admin', userPaidData, { id: user_id })
-        );
-
-        await db.query(
-            queryHelper.insert('payments', paymentLog)
-        );
-
-    } else {
-
-        /* Prevent duplicate transaction */
-        const [duplicateTxn] = await db.query(
+        /*  Get plan */
+        const [plans] = await db.query(
             queryHelper.select(
-                'id',
-                'payments',
-                { transactionid: transactionid }
+                'id, plan_name, duration, duration_type, price, discount_price, is_free',
+                'subscription_plans',
+                { id: packageid },
+                '',
+                1
             )
         );
 
-        if (duplicateTxn.length === 0) {
+        if (!plans.length) {
+            return { status: false, message: 'Invalid plan' };
+        }
 
-            await db.query(
-                queryHelper.update('admin', userPaidData, { id: user_id })
-            );
+        const plan = plans[0];
+        let finalPrice = plan.discount_price ?? plan.price;
 
-            await db.query(
-                queryHelper.insert('payments', paymentLog)
-            );
-
-            /* Send SMS */
-            const [userMobile] = await db.query(
+        /* 1. Apply coupon code  */
+        let couponBonusDays = 0;
+        if (other.coupon_code) {
+            const [coupons] = await db.query(
                 queryHelper.select(
-                    'mobile',
-                    'admin',
-                    { id: user_id },
+                    'id, code, total_qty, start_date, end_date, total_days, status',
+                    'coupon_code',
+                    { code: other.coupon_code },
                     '',
                     1
                 )
             );
 
-            if (userMobile.length > 0) {
-                sms_helper.sms.send_other_sms(
-                    userMobile[0].mobile,
-                    "buy",
-                    `${plan.duration} ${plan.duration_type}`
-                );
+            if (!coupons.length) {
+                return { status: false, message: 'Invalid coupon code' };
+            }
 
-                await db.query(
-                    "DELETE FROM webhook_failed WHERE mobile = '" + userMobile[0].mobile + "'"
-                );
+            const coupon = coupons[0];
+
+            if (Number(coupon.status) !== 1) {
+                return { status: false, message: 'Coupon code is inactive' };
+            }
+
+            const today = new Date();
+            const startDate = new Date(coupon.start_date);
+            const endDate = new Date(coupon.end_date);
+
+            if (today < startDate || today > endDate) {
+                return { status: false, message: 'Coupon code expired or not yet valid' };
+            }
+
+            const [usageCount] = await db.query(
+                `SELECT COUNT(*) as count FROM coupon_code_appy_user WHERE coupon_id = ?`,
+                [coupon.id]
+            );
+
+            if (usageCount[0].count >= coupon.total_qty) {
+                return { status: false, message: 'Coupon usage limit reached' };
+            }
+
+            const [userUsed] = await db.query(
+                queryHelper.select(
+                    'id',
+                    'coupon_code_appy_user',
+                    { user_id, coupon_id: coupon.id },
+                    '',
+                    1
+                )
+            );
+
+            if (userUsed.length) {
+                return { status: false, message: 'Coupon already used by this user' };
+            }
+
+            couponBonusDays = parseInt(coupon.total_days, 10) || 0;
+            other.coupon_id = coupon.id;
+        }
+
+        /*  Prevent duplicate transaction */
+        if (transactionid) {
+            const [dup] = await db.query(
+                queryHelper.select('id', 'payments', { transactionid })
+            );
+            if (dup.length) {
+                return { status: false, message: 'Duplicate transaction' };
             }
         }
+
+        /* Free trial restriction */
+        if (Number(plan.is_free) === 0) {
+            const [trialUsed] = await db.query(`
+                SELECT p.id
+                FROM payments p
+                INNER JOIN subscription_plans sp ON sp.id = p.packageid
+                WHERE p.user_id = ?
+                  AND sp.is_free = 0
+                LIMIT 1
+            `, [user_id]);
+
+            if (trialUsed.length) {
+                return { status: false, message: 'Free trial already used' };
+            }
+        }
+
+        /* Get admin data */
+        const [adminRows] = await db.query(
+            queryHelper.select(
+                'expdate, referral_code',
+                'admin',
+                { id: user_id },
+                '',
+                1
+            )
+        );
+
+        let expiry = new Date();
+
+        if (
+            adminRows.length &&
+            adminRows[0].expdate &&
+            new Date(adminRows[0].expdate) > new Date()
+        ) {
+            expiry = new Date(adminRows[0].expdate);
+        }
+
+        /* 5️⃣ Apply plan duration */
+        const duration = parseInt(plan.duration, 10);
+
+        switch (plan.duration_type) {
+            case 'day':
+                expiry.setDate(expiry.getDate() + duration);
+                break;
+            case 'month':
+                expiry.setMonth(expiry.getMonth() + duration);
+                break;
+            case 'year':
+                expiry.setFullYear(expiry.getFullYear() + duration);
+                break;
+        }
+
+        /* 5.Add coupon bonus days */
+        if (couponBonusDays > 0) {
+            expiry.setDate(expiry.getDate() + couponBonusDays);
+        }
+
+        /* Referral bonus (ONLY expiry update) */
+        if (Number(plan.is_free) === 1 && adminRows[0]?.referral_code) {
+
+            const refCode = adminRows[0].referral_code;
+
+            const [refPaid] = await db.query(`
+                SELECT p.id
+                FROM payments p
+                INNER JOIN subscription_plans sp ON sp.id = p.packageid
+                WHERE p.referral_code = ?
+                  AND sp.is_free = 1
+                LIMIT 1
+            `, [refCode]);
+
+            if (refPaid.length) {
+
+                const [bonusGiven] = await db.query(`
+                    SELECT id
+                    FROM referral_bonus
+                    WHERE user_id = ?
+                    LIMIT 1
+                `, [user_id]);
+
+                if (!bonusGiven.length) {
+                    expiry.setMonth(expiry.getMonth() + 1);
+
+                    // optional tracking (recommended)
+                    await db.query(
+                        queryHelper.insert('referral_bonus', {
+                            user_id,
+                            created_at: config.CURRENT_DATE()
+                        })
+                    );
+                }
+            }
+        }
+
+        /* Update admin */
+        await db.query(
+            queryHelper.update('admin', {
+                ispaid: Number(plan.is_free) === 1 ? '1' : '0',
+                planStatus: Number(plan.is_free) === 1 ? 2 : 1,
+                expdate: commonHelper.formatDate(expiry),
+                status: '1'
+            }, { id: user_id })
+        );
+
+        /* Insert payment (ONLY ONE ROW) */
+        await db.query(
+            queryHelper.insert('payments', {
+                user_id,
+                amount,
+                date: config.ONLY_DATE(),
+                transactionid,
+                status: plan.plan_name,
+                packageid: plan.id,
+                price: finalPrice,
+                referral_code: other.referral_code || null,
+                created_at: config.CURRENT_DATE()
+            })
+        );
+
+        /* 8.Record coupon usage */
+        if (other.coupon_id) {
+            await db.query(
+                queryHelper.insert('coupon_code_appy_user', {
+                    user_id,
+                    coupon_id: other.coupon_id,
+                    created_at: config.CURRENT_DATE()
+                })
+            );
+        }
+
+        /*  SMS */
+        const [mobile] = await db.query(
+            queryHelper.select('mobile', 'admin', { id: user_id }, '', 1)
+        );
+
+        if (mobile.length) {
+            sms_helper.sms.send_other_sms(
+                mobile[0].mobile,
+                'buy',
+                `${plan.duration} ${plan.duration_type}`
+            );
+        }
+
+        return {
+            status: true,
+            message: 'Transaction Successful'
+        };
+
+    } catch (err) {
+        console.error('Payment Error:', err);
+        return { status: false, message: 'Something went wrong' };
     }
-
-    /* ----------------------------------------
-       Update Paid User Counter
-    -----------------------------------------*/
-    await db.query(
-        "UPDATE counter SET paidUser = paidUser + 1"
-    );
-
-    return {
-        status: true,
-        message: "Transaction Successfully!"
-    };
 };

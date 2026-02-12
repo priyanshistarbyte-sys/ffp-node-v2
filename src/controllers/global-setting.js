@@ -77,6 +77,7 @@ exports.getGlobalSetting = async function (req, res) {
     data: {
       splash_screen: foSpashScreen,
       account_setting: foAppAccountSetting,
+      languages: ["English", "Hindi", "Gujarati", "Marathi", "Telugu", "Malayalam", "Tamil", "Banagali", "Panjabi", "Odia", "Kannad", "URDU"],
     },
   };
 

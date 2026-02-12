@@ -93,7 +93,7 @@ exports.getUserProfile = async (userId) => {
   const where = { id: userId, role: "User" };
   let foUser = await db.query(
     queryHelper.select(
-      "id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at,gst_firm_name,gst_no,owner_name,owner_birth_date,business_anniversary_date,business_category_id",
+      "id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at,gst_firm_name,gst_no,owner_name,owner_birth_date,business_anniversary_date,business_category_id,referral_code,used_referral_code",
       "admin",
       where,
       "",
@@ -116,6 +116,8 @@ exports.getUserProfile = async (userId) => {
     foUser.photo_name2 = `media/logo/${foUser.photo}`;
     foUser.photo_name = foUser.photo;
     foUser.photo = foUser.photo != "" ? foUser.photo : "uploadlogo.jpg";
+    foUser.referral_code = foUser.referral_code != null ? foUser.referral_code: "";
+    foUser.used_referral_code = foUser.used_referral_code != null ? foUser.used_referral_code: "";
     foUser.payments = await paymentModel.getPaymentData(foUser.id);
     foUser.token = "";
   }
