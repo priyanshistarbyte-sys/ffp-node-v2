@@ -19,27 +19,27 @@ exports.getHomeScreenData = async function (req, res) {
       let auto = "yes";
       if (foSingleElement.planImgName != "") {
         plan = "yes";
-        foSingleElement.pathB = `media/template/plan/${foSingleElement.mslug}/${foSingleElement.tid}.jpg`;
-        foSingleElement.thumb = `media/template/plan/thumb/${foSingleElement.tid}.jpg`;
+        foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.mslug}/${foSingleElement.tid}.jpg`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.tid}.jpg`;
       } else {
         if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
           plan = "yes";
           auto = "no";
-          foSingleElement.pathB = `media/template/${foSingleElement.path}`;
+          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         } else {
           plan = "no";
-          foSingleElement.pathB = `media/template/${foSingleElement.path}`;
+          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         }
-        foSingleElement.thumb = `media/template/thumb/${foSingleElement.path}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       }
-      foSingleElement.automaticTempB = `media/template/${foSingleElement.path}`;
-      foSingleElement.mask = `media/template/${foSingleElement.mask}`;
+      foSingleElement.automaticTempB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
+      foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+      foSingleElement.path = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       foSingleElement.plan = plan;
       foSingleElement.auto = auto;
 
       delete foSingleElement.created_at;
       delete foSingleElement.mslug;
-      delete foSingleElement.path;
       delete foSingleElement.plan_auto;
       delete foSingleElement.planImgName;
       delete foSingleElement.updated_at;
@@ -76,7 +76,7 @@ exports.getHomeScreenData = async function (req, res) {
   const foTodayVideo = [];
   if (foTodayVideoLists.length > 0) {
     foTodayVideoLists.forEach((foSingleElement) => {
-      foSingleElement.path = foSingleElement.path != "" ? `media/videogif/${foSingleElement.path}` : "";
+      foSingleElement.path = foSingleElement.path != "" ? `${API_BASE_URL}/storage/${foSingleElement.path}` : "";
       foSingleElement.event_date = commonHelper.formatDate(foSingleElement.event_date);
       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
       if (foSingleElement.thumb != "") {

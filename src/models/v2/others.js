@@ -48,7 +48,7 @@ exports.setVideoAnylitics = async () => {
 exports.getNotifications  = async () => {
     
     var where ={ status:1 };
-    var notifications = await db.query(
+    var [notifications] = await db.query(
         queryHelper.select('id, title, message, image, url, status, page, page_data,  created_at','notification_send',where,"id desc")
     );
     var foNotifications = [];
@@ -57,15 +57,15 @@ exports.getNotifications  = async () => {
         for (const foSingleElement of notifications) {
             foSingleElement.created_at = foSingleElement.created_at!="0000-00-00 00:00:00"?commonHelper.customFormatDate(foSingleElement.created_at,'d, M Y g:i a'):'';
 
-            if(foSingleElement.image!=""){
-                foSingleElement.image = "media/notification/" +foSingleElement.image;
-            }else{
+            if(foSingleElement.image && foSingleElement.image!=""){
+                foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+            }else if(foSingleElement.url){
                 var split = foSingleElement.url.split('-_-');
                 if(split[0]=='cat'){
                     var cat_id = split[1];
 
-                    var singleBanner = await db.query(
-                        queryHelper.select('noti_banner','sub_categories',{mid:cat_id},"",1)
+                    var [singleBanner] = await db.query(
+                        queryHelper.select('noti_banner','sub_categories',{id:cat_id},"",1)
                     );
                         
                     if(singleBanner.length > 0 && singleBanner[0].noti_banner!=null && singleBanner[0].noti_banner!="" ){
@@ -73,7 +73,6 @@ exports.getNotifications  = async () => {
                     }else{
                         foSingleElement.image = "";    
                     }
-                    console.log('data');
                 }else{
                     foSingleElement.image = "";
                 }
@@ -82,6 +81,5 @@ exports.getNotifications  = async () => {
             foNotifications.push(foSingleElement);
         }
     }
-    console.log('res');
     return foNotifications;
 }

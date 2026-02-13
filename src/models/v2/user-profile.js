@@ -5,6 +5,7 @@ const uploadHelper = require("@/helper/upload-helper");
 const commonHelper = require("@/helper/common-helper");
 const paymentModel = require("./authentication");
 const fileUpload = require("@/utils/fileUpload");
+const { API_BASE_URL } = process.env;
 
 exports.updateProfile = async (requestBody) => {
   const where = { id: requestBody.user_id };
@@ -61,26 +62,34 @@ exports.updateProfile = async (requestBody) => {
     updateData.business_category_id = requestBody.business_category_id;
   }
 
-  if (requestBody.extestion !== undefined && requestBody.image !== undefined && requestBody.extestion !== "" && requestBody.image !== "") {
-    const logoname = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
-    if (logoname[0].photo !== "") {
-      const removePath = `media/logo/${logoname[0].photo}`;
-      uploadHelper.removeImage(removePath);
+  if (requestBody.image !== undefined && requestBody.image !== "") {
+    const extension = requestBody.extestion || requestBody.extension;
+    
+    if (requestBody.image.includes('base64') && extension) {
+      const storagePath = "storage/uploads/images/business_logo/";
+      const dbPath = "uploads/images/business_logo/";
+
+      // Remove old logo if exists
+      const logoname = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
+      const oldLogo = Array.isArray(logoname[0]) ? logoname[0][0] : logoname[0];
+      if (oldLogo?.photo && oldLogo.photo !== "") {
+        const fileName = oldLogo.photo.startsWith(dbPath) ? oldLogo.photo.replace(dbPath, "") : oldLogo.photo;
+        uploadHelper.removeImage(storagePath + fileName);
+      }
+
+      const fileName = uploadHelper.getFileName(extension, requestBody.user_id);
+      const fullPath = config.FILE_UPLOAD_PATH + storagePath + fileName;
+      
+      await uploadHelper.uploadBase64Image(fullPath, requestBody.image, extension);
+
+      await fileUpload.uploadFileToSpace({
+        binaryData: requestBody.image,
+        keyPath: `${storagePath}${fileName}`,
+        extestion: extension,
+      });
+
+      updateData.photo = dbPath + fileName;
     }
-
-    const imagePath = "media/logo/";
-    const fileName = uploadHelper.getFileName(requestBody.extestion);
-    await uploadHelper.uploadBase64Image("media/logo/", requestBody.image, requestBody.extestion);
-
-    const fileUploadRes = await fileUpload.uploadFileToSpace({
-      binaryData: requestBody.image,
-      keyPath: `${imagePath}${fileName}`,
-      extestion: requestBody.extestion,
-    });
-
-    if (fileUploadRes) {
-    }
-    updateData.photo = fileName;
   }
 
   await db.query(
@@ -113,9 +122,10 @@ exports.getUserProfile = async (userId) => {
     foUser.created_at = commonHelper.customFormatDate(foUser.created_at, "d/m/Y H:i");
     foUser.updated_at = commonHelper.customFormatDate(foUser.updated_at, "d/m/Y H:i");
     foUser.gender = foUser.gender == 0 ? "Male" : "Female";
-    foUser.photo_name2 = `media/logo/${foUser.photo}`;
-    foUser.photo_name = foUser.photo;
-    foUser.photo = foUser.photo != "" ? foUser.photo : "uploadlogo.jpg";
+    // foUser.photo_name2 = `media/logo/${foUser.photo}`;
+    // foUser.photo_name = foUser.photo;
+    // foUser.photo = foUser.photo != "" ? foUser.photo : "uploadlogo.jpg";
+    foUser.photo = foUser.photo != ""  ? API_BASE_URL + '/storage/' + foUser.photo : API_BASE_URL + '/assets/images/Admin.png' ;
     foUser.referral_code = foUser.referral_code != null ? foUser.referral_code: "";
     foUser.used_referral_code = foUser.used_referral_code != null ? foUser.used_referral_code: "";
     foUser.payments = await paymentModel.getPaymentData(foUser.id);
@@ -134,7 +144,7 @@ exports.getUserPosts = async (userId) => {
   if (foPostsLists.length > 0) {
     foPostsLists.forEach((foSingleElement) => {
       foSingleElement.created_at = foSingleElement.created_at != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.created_at, "d, F Y") : "";
-      foSingleElement.post = `media/upload/${foSingleElement.post}`;
+      foSingleElement.post = `${API_BASE_URL}/storage/${foSingleElement.post}`;
       foPosts.push(foSingleElement);
     });
   }
@@ -145,30 +155,32 @@ exports.getUserPosts = async (userId) => {
 exports.uploadLogo = async (requestBody) => {
   const where = { id: requestBody.user_id };
   const updateData = { updated_at: config.CURRENT_DATE() };
+  const storagePath = "storage/uploads/images/business_logo/";
+  const dbPath = "uploads/images/business_logo/";
 
+  // Remove old logo if exists
   const logoname = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
-  if (logoname[0].photo != "") {
-    const removePath = `media/logo/${logoname[0].photo}`;
-    uploadHelper.removeImage(removePath);
+  const oldLogo = Array.isArray(logoname[0]) ? logoname[0][0] : logoname[0];
+  if (oldLogo?.photo && oldLogo.photo !== "") {
+    const fileName = oldLogo.photo.startsWith(dbPath) ? oldLogo.photo.replace(dbPath, "") : oldLogo.photo;
+    uploadHelper.removeImage(storagePath + fileName);
   }
 
-  await uploadHelper.uploadBase64Image("media/logo/", requestBody.image, requestBody.extestion);
+  const fileName = uploadHelper.getFileName(requestBody.extestion, requestBody.user_id);
+  const fullPath = config.FILE_UPLOAD_PATH + storagePath + fileName;
+  
+  await uploadHelper.uploadBase64Image(fullPath, requestBody.image, requestBody.extestion);
 
-  const imagePath = "media/logo/";
-  const fileName = uploadHelper.getFileName(requestBody.extestion);
-
-  const fileUploadRes = await fileUpload.uploadFileToSpace({
+  await fileUpload.uploadFileToSpace({
     binaryData: requestBody.image,
-    keyPath: `${imagePath}${fileName}`,
+    keyPath: `${storagePath}${fileName}`,
     extestion: requestBody.extestion,
   });
 
-  if (fileUploadRes) {
-  }
-  updateData.photo = fileName;
+  updateData.photo = dbPath + fileName;
 
   await db.query(
     queryHelper.update("admin", updateData, where),
   );
-  return `media/logo/${updateData.photo}`;
+  return API_BASE_URL + '/storage/' + updateData.photo;
 };

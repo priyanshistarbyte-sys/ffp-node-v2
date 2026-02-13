@@ -63,7 +63,7 @@ exports.insertComplain = async (request_body) => {
     // Handle MySQL2 result format
     var lastInsert = insert.insertId || insert[0].insertId;
     var compaignId = 'FFP-'+lastInsert.toString().padStart(7, "0");
-    console.log(compaignId);
+    // console.log(compaignId);
     
     await db.query(
         queryHelper.update('complain',{ complain_id :compaignId },{ id:lastInsert })
@@ -85,7 +85,7 @@ exports.getUserComplains  = async (user_id) => {
     var foComapain = [];
     if(complaints.length >  0){
         complaints.forEach(foSingleElement => {
-            console.log("foSingleElement.status",foSingleElement.status);
+            // console.log("foSingleElement.status",foSingleElement.status);
 
             status = "Pending";
             if(foSingleElement.status==1){ status = "On Progress"; }

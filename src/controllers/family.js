@@ -34,21 +34,28 @@ exports.getFamilyCategories = async function (req, res) {
 };
 
 exports.uploadBirthDayBase64Image = async function (req, res) {
-  /* Validate Request */
   const errors = validation.validate(req.body, "image,extestion");
   if (errors.length > 0) {
     return validation.errorMessage(req, res, errors);
   }
 
-  const imagePath = "media/birthday_user/";
+  const storagePath = "storage/uploads/images/birthday_user/";
+  const dbPath = "uploads/images/birthday_user/";
   const fileName = upload.getFileName(req.body.extestion);
+  const fullPath = config.FILE_UPLOAD_PATH + storagePath + fileName;
 
-  await upload.uploadBase64Image(imagePath, req.body.image, req.body.extestion);
+  await upload.uploadBase64Image(fullPath, req.body.image, req.body.extestion);
+
+  await fileUpload.uploadFileToSpace({
+    binaryData: req.body.image,
+    keyPath: `${storagePath}${fileName}`,
+    extestion: req.body.extestion,
+  });
 
   const responseJson = {
     status: true,
     message: "Result Successfully get!....",
-    data: fileName,
+    data: `${API_BASE_URL}/storage/${dbPath}${fileName}`,
   };
 
   res.send(securityHelper.ffp_send_response(req, responseJson));

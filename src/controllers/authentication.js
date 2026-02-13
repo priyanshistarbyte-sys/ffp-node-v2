@@ -22,12 +22,9 @@ exports.userLogin = async function (req, res) {
   };
 
   const foUserList = await authenticationModel.userLogin(req.body.mobile, req.body.password, req.body.contryCode);
-  // console.log('Login query result:', foUserList);
-  // Handle MySQL2 result format [rows, fields]
   const users = Array.isArray(foUserList[0]) ? foUserList[0] : foUserList;
   if (users.length > 0) {
     const foUser = users[0];
-    console.log('User found, status:', foUser.status);
     if (foUser.status != 1) {
       responseJson.message = "Sorry your account is temporarily locked. please try again later.";
       responseJson.status = false;
@@ -120,16 +117,13 @@ exports.userRegister = async function (req, res) {
   };
 
   const mobileCheck = await authenticationModel.checkIsMobileExist(req.body.mobile);
-  console.log(mobileCheck);
   if (mobileCheck) {
     responseJson.status = false;
     responseJson.message = "This mobile number is already registered";
   } else {
-    // Add referral_code to request body if provided
     if (req.body.referral_code) {
       req.body.referral_code = req.body.referral_code.trim();
     }
-    
     const fiUserId = await authenticationModel.userRegister(req.body);
     if (fiUserId > 0) {
       responseJson.data = await userProfileModel.getUserProfile(fiUserId);

@@ -80,8 +80,9 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
             var auto = 'yes';
             if(foSingleElement.planImgName!=""){
                 plan = "yes";
-                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.id+".jpg";
-                foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.id+".jpg";
+                // foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.id+".jpg";
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
+                foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
             }else{
                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
                     plan = 'yes';
@@ -94,7 +95,8 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
             foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
-            foSingleElement.mask = API_BASE_URL + `/storage/${foSingleElement.mask}`;
+            foSingleElement.mask = foSingleElement.mask != ""  ? API_BASE_URL + '/storage/' + foSingleElement.mask : null ;        
+            
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
     
@@ -142,194 +144,6 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
     return foVideos;
 }
 
-// exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
-
-//     /* Order by sequance takes time on query so we do it manually order by */
-//     var foHomePagePostsLists = await db.query(
-//         queryHelper.select(
-//             'home_category_id,home_sub_category_id,home_title,sequence,home_status,is_show_on_home,is_new,\
-//             template_id,free_paid,event,sub_event_date,path,font_type,font_size,font_color,template_lable,template_lablebg,\
-//             planImgName,created_at,updated_at,mslug as cat_slug,mtitle as cat_name,plan_auto',
-//             'home_page_category_wise_posts',
-//             {home_status:1}
-//         )
-//     );
-
-//     var foHomePagePosts = [];
-//     if(foHomePagePostsLists.length > 0){
-//         var foCategoryWisePosts = [];
-//         foHomePagePostsLists.forEach(foSingleElement => {
-//             foSingleElement.event_date = foSingleElement.sub_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.sub_event_date,'d, F Y'):'';
-
-//             var plan = 'no';
-//             var auto = 'yes';
-//             if(foSingleElement.planImgName!=""){
-//                 plan = "yes";
-//                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id+".jpg";
-//                 foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.template_id+".jpg";
-//             }else{
-//                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
-//                     plan = 'yes';
-//                     auto = 'no';
-//                     foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
-//                 }else{
-//                     plan = 'no';
-//                     foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
-//                 }
-//                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
-//             }
-//             foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
-//             foSingleElement.plan = plan;
-//             foSingleElement.auto = auto;
-
-//             var fiCategoryId = foSingleElement.home_category_id;
-//             if(foCategoryWisePosts[fiCategoryId]===undefined){
-//                 foCategoryWisePosts[fiCategoryId] = { 
-//                     name : foSingleElement.home_title,
-//                     mid : fiCategoryId,
-//                     sequence : foSingleElement.sequence,
-//                     icon : foSingleElement.is_new==1 || foSingleElement.is_new=="1"?'red':'', // If null then new not exist other wise pass any text to visible new tag in app
-//                     data : []
-//                 };
-//             }
-
-//             delete foSingleElement.created_at;
-//             delete foSingleElement.path;
-//             delete foSingleElement.updated_at;
-//             delete foSingleElement.home_title;
-//             delete foSingleElement.home_category_id;
-//             delete foSingleElement.is_new;
-//             delete foSingleElement.sequence;
-//             delete foSingleElement.is_show_on_home;
-//             delete foSingleElement.home_sub_category_id;
-//             delete foSingleElement.home_status;
-//             delete foSingleElement.plan_auto
-//             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
-//         });
-
-//         /* Limit + random posts */
-//         var foFinalArray = [];
-//         foCategoryWisePosts.forEach(foSingleElement =>{
-//             if(foSingleElement!=null){
-//                 if(limit!=""){
-//                     foSingleElement.data = foSingleElement.data.sort(() => Math.random() - Math.random()).slice(0, config.POSTLIMIT);
-//                 }
-//                 foFinalArray.push(foSingleElement);
-//             }
-//         });
-
-//          /* Order by sequance */
-//          var sortyKey = 'sequence';
-//          foFinalArray.sort(function(a, b) {
-//             var x = a[sortyKey]; var y = b[sortyKey];
-//             return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-//         });
-//     }
-
-//     return foFinalArray;
-// }
-
-// exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
-
-//     var foHomePagePostsLists = await db.query(
-//         queryHelper.select(
-//             'home_category_id,home_sub_category_id,home_title,sequence,home_status,is_show_on_home,is_new,\
-//              sub_category_id,category_id,mtitle,mslug,image,sub_event_date,plan_auto,sub_lable,sub_lablebg,\
-//              template_id,free_paid,event,template_event_date,path,font_type,font_size,font_color,\
-//              template_lable,template_lablebg,language,planImgName,created_at,updated_at',
-//             'home_page_category_wise_posts',
-//             { home_status: 1, is_show_on_home: 1 }
-//         )
-//     );
-
-//     var foFinalArray = [];
-
-//     if (foHomePagePostsLists.length > 0) {
-
-//         var foCategoryWisePosts = {}; // ✅ object, not array
-
-//         foHomePagePostsLists.forEach(foSingleElement => {
-
-//             /* Format event date */
-//             foSingleElement.event_date =
-//                 foSingleElement.sub_event_date && foSingleElement.sub_event_date !== "0000-00-00"
-//                     ? commonHelper.customFormatDate(foSingleElement.sub_event_date, 'd, F Y')
-//                     : '';
-
-//             /* Plan logic */
-//             let plan = 'no';
-//             let auto = 'yes';
-
-//             if (foSingleElement.planImgName) {
-//                 plan = 'yes';
-//                 foSingleElement.thumb =
-//                     API_BASE_URL + '/storage/' + foSingleElement.template_id + '.jpg';
-//                 foSingleElement.pathB =
-//                     API_BASE_URL + '/storage/' + foSingleElement.mslug + '/' + foSingleElement.template_id + '.jpg';
-//             } else {
-//                 if (String(foSingleElement.plan_auto) === '1') {
-//                     plan = 'yes';
-//                     auto = 'no';
-//                 }
-//                 foSingleElement.thumb =
-//                     API_BASE_URL + '/storage/' + foSingleElement.path;
-//                 foSingleElement.pathB =
-//                     API_BASE_URL + '/storage/' + foSingleElement.path;
-//             }
-
-//             foSingleElement.automaticTempB =
-//                 API_BASE_URL + '/storage/' + foSingleElement.path;
-
-//             foSingleElement.plan = plan;
-//             foSingleElement.auto = auto;
-
-//             /* Group by home category */
-//             const fiCategoryId = foSingleElement.home_category_id;
-
-//             if (!foCategoryWisePosts[fiCategoryId]) {
-//                 foCategoryWisePosts[fiCategoryId] = {
-//                     name: foSingleElement.home_title,
-//                     mid: fiCategoryId,
-//                     sequence: foSingleElement.sequence,
-//                     icon: (String(foSingleElement.is_new) === '1') ? 'red' : '',
-//                     data: []
-//                 };
-//             }
-
-//             /* Remove unnecessary fields from item */
-//             delete foSingleElement.created_at;
-//             delete foSingleElement.updated_at;
-//             delete foSingleElement.home_title;
-//             delete foSingleElement.home_category_id;
-//             delete foSingleElement.home_sub_category_id;
-//             delete foSingleElement.sequence;
-//             delete foSingleElement.home_status;
-//             delete foSingleElement.is_show_on_home;
-//             delete foSingleElement.is_new;
-//             delete foSingleElement.plan_auto;
-
-//             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
-//         });
-
-//         /* Convert object → array */
-//         Object.values(foCategoryWisePosts).forEach(foSingleElement => {
-
-//             if (limit) {
-//                 foSingleElement.data =
-//                     foSingleElement.data
-//                         .sort(() => Math.random() - Math.random())
-//                         .slice(0, config.POSTLIMIT);
-//             }
-
-//             foFinalArray.push(foSingleElement);
-//         });
-
-//         /* Order by sequence */
-//         foFinalArray.sort((a, b) => a.sequence - b.sequence);
-//     }
-
-//     return foFinalArray;
-// };
 
 
 exports.getHomePagePostsListWithCategoryGroup = async (limit) => {

@@ -312,7 +312,7 @@ exports.applyCouponCode = async function (req, res) {
       expdate: commonHelper.formatDate(expiryDate),
       planStatus: "1",
     };
-    console.log(userPaidData);
+    // console.log(userPaidData);
     await model.updatePaymentData(userPaidData, req.body.user_id);
 
     /* Update Coupon Use Count */

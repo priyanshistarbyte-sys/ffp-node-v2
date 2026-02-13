@@ -58,15 +58,13 @@ exports.checkIsMobileExist = async (mobile) => {
             1
         )
     );
-    
-    // Handle MySQL2 result format [rows, fields]
     const users = Array.isArray(foUser[0]) ? foUser[0] : foUser;
     return users.length > 0;
 }
 
 exports.updatePassword = async (mobile,new_pass) => {
     var where ={ mobile:mobile, 'role':'User' };
-    var update_data = { updated_date : config.CURRENT_DATE(),password:new_pass };
+    var update_data = { updated_at : config.CURRENT_DATE(),password:new_pass };
 
     await db.query(
         queryHelper.update('admin',update_data,where)
@@ -129,11 +127,10 @@ exports.userRegister = async (request_body) => {
             }
         )
     );
-    // Handle MySQL2 result format
     var insertId = insertData.insertId || (insertData[0] && insertData[0].insertId) || 0;
     if(insertId > 0){
         console.log('sandip------register', request_body.mobile);
-        // sms_helper.sms.send_other_sms(request_body.mobile,"welcome","");
+        sms_helper.sms.send_other_sms(request_body.mobile,"welcome","");
         var update_data = { totalUsers : "totalUsers+1" };
         await db.query(
             "update counter set totalUsers=totalUsers+1"

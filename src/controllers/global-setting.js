@@ -12,7 +12,7 @@ const userDetailModel = require(`@/models/${config.api_version}/user-details`);
 const authenticationmModel = require(`@/models/${config.api_version}/authentication`);
 
 exports.getGlobalSetting = async function (req, res) {
-  console.log("config");
+  // console.log("config");
   /* Validate Request */
   const errors = validation.validate(req.body, "app_version,oprating_system,device_id,user_id");
   if (errors.length > 0) {
@@ -34,7 +34,7 @@ exports.getGlobalSetting = async function (req, res) {
     authenticationmModel.updateLastLogin(req.body.user_id);
     let foUserPlan = await userDetailModel.checkUserPlan(req.body.user_id);
     if (foUserPlan.length > 0) {
-      console.log("foUserPlan", foUserPlan);
+      // console.log("foUserPlan", foUserPlan);
       foUserPlan = foUserPlan[0];
       // foAppAccountSetting.expdate = foUserPlan.expdate;
       foAppAccountSetting.userstatus = foUserPlan.status;
@@ -90,7 +90,7 @@ exports.getGlobalSetting = async function (req, res) {
 };
 
 exports.syncFirebaseToken = async function (req, res) {
-  console.log("req.body", req.body);
+  // console.log("req.body", req.body);
   /* Validate Request */
   const errors = validation.validate(req.body, "app_version,oprating_system,device_id,user_id,fcm_token");
   if (errors.length > 0) {
