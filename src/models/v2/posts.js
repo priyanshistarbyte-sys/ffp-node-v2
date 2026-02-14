@@ -70,18 +70,49 @@ exports.getTodayPosts = (limit = "") => {
     );
 };
 
-exports.getUpcomingPosts = (limit="") => {
-    var startDate = new Date();
-    startDate.setDate(startDate.getDate() - 10);
+// exports.getUpcomingPosts = (limit="") => {
+//     var startDate = new Date();
+//     console.log('getUpcomingPosts called - Current Date:', startDate);
+    
+//     startDate.setDate(startDate.getDate() - 10);
+//     console.log('Start Date (10 days ago):', startDate, '| Formatted:', commonHelper.formatDate(startDate));
 
-    var endDate = new Date();
-    endDate.setDate(endDate.getDate() + config.TOTALDAYS);
+//     var endDate = new Date();
+//     endDate.setDate(endDate.getDate() + config.TOTALDAYS);
+//     console.log('End Date (+', config.TOTALDAYS, 'days):', endDate, '| Formatted:', commonHelper.formatDate(endDate));
+//     return db.query(
+//         queryHelper.select(
+//             'id,category_id,image,event_date,mtitle,mslug,status,lable,lablebg,noti_banner,noti_quote,plan_auto,created_at,updated_at',
+//             'sub_categories',
+//             {'status':1,'event_date>':commonHelper.formatDate(startDate),"event_date<":commonHelper.formatDate(endDate)},
+//             "event_date desc",
+//             limit
+//         )
+//     );
+// }
+
+exports.getUpcomingPosts = (limit="") => {
+
+    // TODAY (start)
+    const startDate = new Date();
+
+    // TODAY + 30 days (end)
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 30);
+
+    console.log("Start Date:", commonHelper.formatDate(startDate));
+    console.log("End Date:", commonHelper.formatDate(endDate));
+
     return db.query(
         queryHelper.select(
             'id,category_id,image,event_date,mtitle,mslug,status,lable,lablebg,noti_banner,noti_quote,plan_auto,created_at,updated_at',
             'sub_categories',
-            {'status':1,'event_date>':commonHelper.formatDate(startDate),"event_date<":commonHelper.formatDate(endDate)},
-            "event_date desc",
+            {
+                'status':1,
+                'event_date>=': commonHelper.formatDate(startDate),
+                'event_date<=': commonHelper.formatDate(endDate)
+            },
+            "event_date asc",
             limit
         )
     );

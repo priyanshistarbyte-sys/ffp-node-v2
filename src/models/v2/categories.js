@@ -4,6 +4,26 @@ const queryHelper = require('@/helper/query-helper');
 const commonHelper = require('@/helper/common-helper');
 const { API_BASE_URL } = process.env;
 
+exports.getAllCategories = async () => {
+    const result = await db.query(
+        queryHelper.select('*', 'categories', {}, 'sort ASC')
+    );
+
+    const categories = Array.isArray(result[0]) ? result[0] : result;
+    const foMainCategories = [];
+    
+    if (categories.length > 0) {
+        categories.forEach(cat => {
+            if (cat.icon) {
+                cat.icon = `${API_BASE_URL}/storage/${cat.icon}`;
+            }
+            foMainCategories.push(cat);
+        });
+    }
+
+    return foMainCategories;
+}
+
 exports.getSubCategories = async (category_id) => {
     var startDate = new Date();
     startDate.setDate(startDate.getDate() - 10);
@@ -37,7 +57,7 @@ exports.getSubCategories = async (category_id) => {
             // console.log(API_BASE_URL);
             
             if(foSingleElement.image!=""){
-                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.image;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElemente.image;
                 foSingleElement.image = API_BASE_URL + '/storage/' + foSingleElement.image;
             }else{
                 foSingleElement.thumb = API_BASE_URL + '/storage/';
@@ -236,4 +256,147 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
     }
 
     return foFinalArray;
+}
+
+exports.searchCategoriesAndSubCategories = async (searchTerm) => {
+    const searchPattern = `%${searchTerm}%`;
+    
+    // Search in categories
+    const categoriesQuery = `
+        SELECT id, title as name, 'category' as type, icon, sort, created_at, updated_at 
+        FROM categories 
+        WHERE title LIKE ? 
+        ORDER BY sort ASC
+    `;
+    
+    // Search in sub_categories
+    const subCategoriesQuery = `
+        SELECT sc.id, sc.mtitle as name, 'sub_category' as type, sc.image, sc.category_id, 
+               c.title as category_name, sc.event_date, sc.mslug, sc.created_at, sc.updated_at
+        FROM sub_categories sc
+        LEFT JOIN categories c ON sc.category_id = c.id
+        WHERE sc.mtitle LIKE ? AND sc.status = 1
+        ORDER BY sc.mtitle ASC
+    `;
+    
+    // Search in templates
+    const templatesQuery = `
+        SELECT t.id, t.path, t.free_paid, t.event_date, t.sub_category_id, t.font_type, t.font_size, 
+               t.font_color, t.lable, t.lablebg, t.language, t.planImgName, t.has_mask, t.mask,
+               sc.mtitle as sub_category_name, sc.mslug as cat_slug, sc.plan_auto, 'template' as type
+        FROM tamplet t
+        LEFT JOIN sub_categories sc ON t.sub_category_id = sc.id
+        WHERE sc.mtitle LIKE ? AND sc.status = 1
+        ORDER BY t.id DESC
+    `;
+    
+    // Search in videos
+    const videosQuery = `
+        SELECT v.id, v.sub_category_id, v.type, v.free_paid, v.path, v.thumb, v.lable, v.lablebg, 
+               sc.mtitle as sub_category_name, sc.event_date, 'video' as type
+        FROM videogif v
+        LEFT JOIN sub_categories sc ON v.sub_category_id = sc.id
+        WHERE sc.mtitle LIKE ? AND v.status = 1
+        ORDER BY v.id DESC
+    `;
+    
+    // Search in posts
+    const postsQuery = `
+        SELECT p.id, p.user_id, p.tamp_id, p.post, p.created_at, 
+               t.sub_category_id, sc.mtitle as sub_category_name, 'post' as type
+        FROM makepost p
+        LEFT JOIN tamplet t ON p.tamp_id = t.id
+        LEFT JOIN sub_categories sc ON t.sub_category_id = sc.id
+        WHERE sc.mtitle LIKE ? AND sc.status = 1
+        ORDER BY p.id DESC
+    `;
+    
+    const [categoriesResult, subCategoriesResult, templatesResult, videosResult, postsResult] = await Promise.all([
+        db.query(categoriesQuery, [searchPattern]),
+        db.query(subCategoriesQuery, [searchPattern]),
+        db.query(templatesQuery, [searchPattern]),
+        db.query(videosQuery, [searchPattern]),
+        db.query(postsQuery, [searchPattern])
+    ]);
+    
+    const categories = Array.isArray(categoriesResult[0]) ? categoriesResult[0] : categoriesResult;
+    const subCategories = Array.isArray(subCategoriesResult[0]) ? subCategoriesResult[0] : subCategoriesResult;
+    const templates = Array.isArray(templatesResult[0]) ? templatesResult[0] : templatesResult;
+    const videos = Array.isArray(videosResult[0]) ? videosResult[0] : videosResult;
+    const posts = Array.isArray(postsResult[0]) ? postsResult[0] : postsResult;
+    
+    // Format categories
+    const formattedCategories = categories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        type: cat.type,
+        icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null
+    }));
+    
+    // Format sub-categories
+    const formattedSubCategories = subCategories.map(subCat => ({
+        id: subCat.id,
+        name: subCat.name,
+        type: subCat.type,
+        category_id: subCat.category_id,
+        category_name: subCat.category_name,
+        image: subCat.image ? `${API_BASE_URL}/storage/${subCat.image}` : null,
+        event_date: subCat.event_date !== '0000-00-00' ? commonHelper.customFormatDate(subCat.event_date, 'd, F Y') : '',
+        slug: subCat.mslug
+    }));
+    
+    // Format templates
+    const formattedTemplates = templates.map(temp => {
+        const plan = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'yes' : 'no');
+        const auto = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'no' : 'yes');
+        
+        return {
+            id: temp.id,
+            type: temp.type,
+            sub_category_id: temp.sub_category_id,
+            sub_category_name: temp.sub_category_name,
+            thumb: `${API_BASE_URL}/storage/${temp.path}`,
+            pathB: `${API_BASE_URL}/storage/${temp.path}`,
+            mask: temp.mask ? `${API_BASE_URL}/storage/${temp.mask}` : null,
+            event_date: temp.event_date !== '0000-00-00' ? commonHelper.customFormatDate(temp.event_date, 'd, F Y') : '',
+            plan: plan,
+            auto: auto,
+            free_paid: temp.free_paid,
+            language: temp.language
+        };
+    });
+    
+    // Format videos
+    const formattedVideos = videos.map(video => ({
+        id: video.id,
+        type: video.type,
+        sub_category_id: video.sub_category_id,
+        sub_category_name: video.sub_category_name,
+        path: `${API_BASE_URL}/storage/${video.path}`,
+        thumb: video.thumb ? `${API_BASE_URL}/storage/${video.thumb}` : null,
+        lable: video.lable,
+        lablebg: video.lablebg,
+        free_paid: video.free_paid,
+        event_date: video.event_date !== '0000-00-00' ? commonHelper.customFormatDate(video.event_date, 'd, F Y') : ''
+    }));
+    
+    // Format posts
+    const formattedPosts = posts.map(post => ({
+        id: post.id,
+        type: post.type,
+        user_id: post.user_id,
+        tamp_id: post.tamp_id,
+        sub_category_id: post.sub_category_id,
+        sub_category_name: post.sub_category_name,
+        post: post.post ? `${API_BASE_URL}/storage/${post.post}` : null,
+        created_at: commonHelper.formatDate(post.created_at)
+    }));
+    
+    return {
+        categories: formattedCategories,
+        sub_categories: formattedSubCategories,
+        templates: formattedTemplates,
+        videos: formattedVideos,
+        posts: formattedPosts
+    };
 }

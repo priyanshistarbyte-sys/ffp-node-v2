@@ -7,6 +7,7 @@ var categories = require('@/controllers/categories');
 router.post('/category-wise-post-data',categories.getCategoryWisePostSubCatData);
 router.post('/get-categories',categories.getAllCategories);
 router.post('/get-sub-categories',categories.getSubCategories);
+router.post('/search',categories.searchCategories);
 
 module.exports = router;
 

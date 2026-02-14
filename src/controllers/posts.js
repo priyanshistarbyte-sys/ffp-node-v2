@@ -184,33 +184,101 @@ exports.getTodayPosts = async function (req, res) {
   res.send(securityHelper.ffp_send_response(req, responseJson));
 };
 
+// exports.getUpcomingPosts = async function (req, res) {
+//   /* Get UpComing Posts */
+//   const foUpComingPostsLists = await model.getUpcomingPosts();
+//   const foUpComingPosts = [];
+//   if (foUpComingPostsLists.length > 0) {
+//     foUpComingPostsLists.forEach((foSingleElement) => {
+//       foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
+//       if (foSingleElement.image != "") {
+//         foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+//         foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+//       } else {
+//         foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`; 
+//         foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`; 
+//       }
+//       // if(foSingleElement.plan_auto==null){
+//       //     foSingleElement.plan_auto = "1";
+//       // }
+//       foUpComingPosts.push(foSingleElement);
+//     });
+//   }
+//   /* Get UpComing Posts */
+
+//   const responseJson = {
+//     status: true,
+//     message: "Result Successfully get!....",
+//     data: foUpComingPosts,
+//   };
+
+//   res.send(securityHelper.ffp_send_response(req, responseJson));
+// };
+
+
 exports.getUpcomingPosts = async function (req, res) {
-  /* Get UpComing Posts */
-  const foUpComingPostsLists = await model.getUpcomingPosts();
-  const foUpComingPosts = [];
-  if (foUpComingPostsLists.length > 0) {
-    foUpComingPostsLists.forEach((foSingleElement) => {
-      foSingleElement.event_date = foSingleElement.event_date != "0000-00-00" ? commonHelper.customFormatDate(foSingleElement.event_date, "d, F Y") : "";
-      if (foSingleElement.image != "") {
-        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
-        foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
+
+  const [rows] = await model.getUpcomingPosts();
+
+  const grouped = {};
+
+  if (rows.length > 0) {
+
+    rows.forEach((row) => {
+
+      // ---------- KEEP YOUR OLD DATE FORMAT ----------
+      const displayDate =
+        row.event_date != "0000-00-00"
+          ? commonHelper.customFormatDate(row.event_date, "d, F Y")
+          : "";
+
+      // ---------- DATE KEY FOR GROUPING ----------
+      const d = new Date(row.event_date);
+      const key = d.toLocaleDateString('en-GB').replace(/\//g,'-');
+
+
+      // ---------- KEEP YOUR IMAGE LOGIC ----------
+      if (row.image != "") {
+        row.thumb = `${API_BASE_URL}/storage/${row.image}`;
+        row.image = `${API_BASE_URL}/storage/${row.image}`;
       } else {
-        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`; 
-        foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`; 
+        row.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
+        row.image = `${API_BASE_URL}/assets/images/default.jpg`;
       }
-      // if(foSingleElement.plan_auto==null){
-      //     foSingleElement.plan_auto = "1";
-      // }
-      foUpComingPosts.push(foSingleElement);
+
+
+      // ---------- KEEP YOUR PLAN_AUTO LOGIC ----------
+      if (row.plan_auto == null) {
+          row.plan_auto = "1";
+      }
+
+
+      // ---------- SET DISPLAY DATE ----------
+      row.event_date = displayDate;
+
+
+      // ---------- GROUP ----------
+      if (!grouped[key]) {
+        grouped[key] = {
+          date: key,
+          category_data: []
+        };
+      }
+
+      grouped[key].category_data.push(row);
+
     });
+
   }
-  /* Get UpComing Posts */
 
-  const responseJson = {
-    status: true,
-    message: "Result Successfully get!....",
-    data: foUpComingPosts,
-  };
+  // convert object → array
+  const finalData = Object.values(grouped);
 
-  res.send(securityHelper.ffp_send_response(req, responseJson));
+  res.send(
+    securityHelper.ffp_send_response(req,{
+      status:true,
+      message:"Result Successfully get!....",
+      data: finalData
+    })
+  );
 };

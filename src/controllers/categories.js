@@ -33,12 +33,17 @@ exports.getCategoryWisePostSubCatData = async function (req, res) {
 };
 
 exports.getAllCategories = async function (req, res) {
-  const foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
+  let foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
+
+  // If cache is empty, fetch from database
+  if (!foAllCategories) {
+    foAllCategories = await categoryModel.getAllCategories();
+  }
 
   const responseJson = {
     status: true,
     message: "Result Successfully get!....",
-    data: foAllCategories,
+    data: foAllCategories || [],
   };
 
   res.send(securityHelper.ffp_send_response(req, responseJson));
@@ -57,6 +62,24 @@ exports.getSubCategories = async function (req, res) {
     status: true,
     message: "Result Successfully get!....",
     data: foAllSubCategories,
+  };
+
+  res.send(securityHelper.ffp_send_response(req, responseJson));
+};
+
+exports.searchCategories = async function (req, res) {
+  /* Validate Request */
+  const errors = validation.validate(req.body, "search");
+  if (errors.length > 0) {
+    return validation.errorMessage(req, res, errors);
+  }
+
+  const searchResults = await categoryModel.searchCategoriesAndSubCategories(req.body.search);
+
+  const responseJson = {
+    status: true,
+    message: "Search results retrieved successfully",
+    data: searchResults,
   };
 
   res.send(securityHelper.ffp_send_response(req, responseJson));
