@@ -57,7 +57,7 @@ exports.getSubCategories = async (category_id) => {
             // console.log(API_BASE_URL);
             
             if(foSingleElement.image!=""){
-                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElemente.image;
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.image;
                 foSingleElement.image = API_BASE_URL + '/storage/' + foSingleElement.image;
             }else{
                 foSingleElement.thumb = API_BASE_URL + '/storage/';
@@ -115,7 +115,18 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
             foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
-            foSingleElement.mask = foSingleElement.mask != ""  ? API_BASE_URL + '/storage/' + foSingleElement.mask : null ;        
+            
+            // Handle multiple masks stored as JSON array
+            if (foSingleElement.mask && foSingleElement.mask !== "") {
+                try {
+                    const masks = JSON.parse(foSingleElement.mask);
+                    foSingleElement.mask = masks.map(m => `${API_BASE_URL}/storage/${m}`);
+                } catch (e) {
+                    foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+                }
+            } else {
+                foSingleElement.mask = null;
+            }
             
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
@@ -350,6 +361,17 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         const plan = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'yes' : 'no');
         const auto = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'no' : 'yes');
         
+        // Handle multiple masks
+        let maskUrls = null;
+        if (temp.mask && temp.mask !== "") {
+            try {
+                const masks = JSON.parse(temp.mask);
+                maskUrls = masks.map(m => `${API_BASE_URL}/storage/${m}`);
+            } catch (e) {
+                maskUrls = `${API_BASE_URL}/storage/${temp.mask}`;
+            }
+        }
+        
         return {
             id: temp.id,
             type: temp.type,
@@ -357,7 +379,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
             sub_category_name: temp.sub_category_name,
             thumb: `${API_BASE_URL}/storage/${temp.path}`,
             pathB: `${API_BASE_URL}/storage/${temp.path}`,
-            mask: temp.mask ? `${API_BASE_URL}/storage/${temp.mask}` : null,
+            mask: maskUrls,
             event_date: temp.event_date !== '0000-00-00' ? commonHelper.customFormatDate(temp.event_date, 'd, F Y') : '',
             plan: plan,
             auto: auto,

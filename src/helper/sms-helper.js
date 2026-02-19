@@ -216,11 +216,15 @@ var sms_helper = {
         formData.append('var1', email_var1);
         formData.append('var2', email_var2);
         formData.append('var3', email_var3);
-        const abc = await axios.post(
-          `${API_BASE_URL}/api/api/nodeSideEmailSend`,
-          formData,
-        );
-        console.log(abc);
+        try {
+          const abc = await axios.post(
+            `${API_BASE_URL}/api/nodeSideEmailSend`,
+            formData,
+          );
+          console.log(abc);
+        } catch (error) {
+          console.error('Forgot password email API error:', error.message);
+        }
       }
     }
 
@@ -280,11 +284,15 @@ var sms_helper = {
       formData1.append('var2', '');
       formData1.append('var3', '');
 
-      const abc = await axios.post(
-        `${API_BASE_URL}/api/api/nodeSideSMSSend`,
-        formData1,
-      );
-      console.log(abc);
+      try {
+        const abc = await axios.post(
+          `${API_BASE_URL}/api/nodeSideSMSSend`,
+          formData1,
+        );
+        console.log(abc);
+      } catch (error) {
+        console.error('OTP SMS API error:', error.message);
+      }
     }
   },
 
@@ -404,22 +412,26 @@ var sms_helper = {
         break;
     }
     /* php api whatsapp msg api call start */
-    const formDataWP = new FormData();
-    formDataWP.append(
-      'mytoken',
-      'mVfHmPbTudbqJBWMiqoAPA91bH6gSTssOVJwlpJeuIVwdSbZGFUd4b7HoNZ5FyaNN4LVLbdmffp9',
-    );
-    formDataWP.append('mobile', mobile);
-    formDataWP.append('tempname', whatsAppTempName);
-    formDataWP.append('userName', userName);
-    formDataWP.append('expired', expired);
-    formDataWP.append('term', term);
+    try {
+      const formDataWP = new FormData();
+      formDataWP.append(
+        'mytoken',
+        'mVfHmPbTudbqJBWMiqoAPA91bH6gSTssOVJwlpJeuIVwdSbZGFUd4b7HoNZ5FyaNN4LVLbdmffp9',
+      );
+      formDataWP.append('mobile', mobile);
+      formDataWP.append('tempname', whatsAppTempName);
+      formDataWP.append('userName', userName);
+      formDataWP.append('expired', expired);
+      formDataWP.append('term', term);
 
-    const WhatLog = await axios.post(
-      `${API_BASE_URL}/api/api/nodeSideWhatsAppSMS`,
-      formDataWP,
-    );
-    console.log(WhatLog);
+      const WhatLog = await axios.post(
+        `${API_BASE_URL}/api/nodeSideWhatsAppSMS`,
+        formDataWP,
+      );
+      console.log(WhatLog);
+    } catch (error) {
+      console.error('WhatsApp API error:', error.message);
+    }
     /* php api whatsapp msg api call end */
 
     const sms_gateway_type = await sms_helper.gateway_type();
@@ -447,11 +459,15 @@ var sms_helper = {
       formData1.append('var2', var2);
       formData1.append('var3', var3);
 
-      const abc = await axios.post(
-        `${API_BASE_URL}/api/api/nodeSideSMSSend`,
-        formData1,
-      );
-      console.log(abc);
+      try {
+        const abc = await axios.post(
+          `${API_BASE_URL}/api/nodeSideSMSSend`,
+          formData1,
+        );
+        console.log(abc);
+      } catch (error) {
+        console.error('SMS API error:', error.message);
+      }
     }
 
     if (b_email != '' && email_tamp_name != '') {
@@ -468,11 +484,15 @@ var sms_helper = {
       formData.append('var2', email_var2);
       formData.append('var3', email_var3);
 
-      const abc = await axios.post(
-        `${API_BASE_URL}/api/api/nodeSideEmailSend`,
-        formData,
-      );
-      console.log(abc);
+      try {
+        const abc = await axios.post(
+          `${API_BASE_URL}/api/nodeSideEmailSend`,
+          formData,
+        );
+        console.log(abc);
+      } catch (error) {
+        console.error('Email API error:', error.message);
+      }
     }
   },
 };

@@ -33,7 +33,17 @@ exports.getHomeScreenData = async function (req, res) {
         foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       }
       foSingleElement.automaticTempB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
-      foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+      
+      // Handle multiple masks stored as JSON array
+      if (foSingleElement.mask) {
+        try {
+          const masks = JSON.parse(foSingleElement.mask);
+          foSingleElement.mask = masks.map(m => `${API_BASE_URL}/storage/${m}`);
+        } catch (e) {
+          foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+        }
+      }
+      
       foSingleElement.path = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       foSingleElement.plan = plan;
       foSingleElement.auto = auto;
@@ -138,7 +148,17 @@ exports.getTodayPosts = async function (req, res) {
         foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`; 
       }
       foSingleElement.automaticTempB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
-      foSingleElement.mask =  `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+      
+      // Handle multiple masks stored as JSON array
+      if (foSingleElement.mask) {
+        try {
+          const masks = JSON.parse(foSingleElement.mask);
+          foSingleElement.mask = masks.map(m => `${API_BASE_URL}/storage/${m}`);
+        } catch (e) {
+          foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
+        }
+      }
+      
       foSingleElement.plan = plan;
       foSingleElement.auto = auto;
 

@@ -27,9 +27,10 @@ exports.getPaymentData = async (user_id) => {
         )
     );
 
+    const payments = Array.isArray(foPaymentsList[0]) ? foPaymentsList[0] : foPaymentsList;
     var foPayments = [];
-    if(foPaymentsList.length > 0){
-        foPaymentsList.forEach(foSingleElement => {
+    if(payments.length > 0){
+        payments.forEach(foSingleElement => {
             foSingleElement.date = foSingleElement.date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.date,'d/F/Y'):'';
             foPayments.push(foSingleElement);
         });
