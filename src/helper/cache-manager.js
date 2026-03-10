@@ -104,10 +104,14 @@ exports.getDataFromCache = async (cacheKey) => {
                 {}
             )
         );
+        console.log('foAllSettingData from DB:', foAllSettingData);
 
         if(foAllSettingData.length > 0){
+            const settingData = Array.isArray(foAllSettingData[0]) ? foAllSettingData[0] : foAllSettingData;
             var foAllSetting = {};
-            foAllSettingData.forEach(element => {
+            console.log('Processed foAllSetting:');
+            settingData.forEach(element => {
+                console.log('Processed foAllSetting:', element.option_name);
                 foAllSetting[element.option_name] = element.value;
             });
 
@@ -133,7 +137,6 @@ exports.getDataFromCache = async (cacheKey) => {
                 "paymentTransactionKey1" : foAllSetting['paymentTKey1'],
                 "paymentTransactionKey2" : foAllSetting['paymentTKey2'],
                 "paymentTransactionSecretkey" : foAllSetting['secretKey'],
-                "aboutUs" : foAllSetting['aboutUs'],
                 "aboutUs" : foAllSetting['aboutUs'],
                 "shareLink" : foAllSetting['sharingLink'],
                 "sharingBanner" : foAllSetting['sharingBanner'] && foAllSetting['sharingBanner'] !== '' ? 
