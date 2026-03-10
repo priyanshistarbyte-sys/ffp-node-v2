@@ -7,7 +7,7 @@ const validation = require("@/helper/validation");
 const sms_helper = require("@/helper/sms-helper");
 const uploadHelper = require("@/helper/upload-helper");
 const commonHelper = require("@/helper/common-helper");
-const fileUpload = require("@/utils/fileUpload");
+//const fileUpload = require("@/utils/fileUpload");
 
 const model = require(`@/models/${config.api_version}/user-settings`);
 
@@ -188,11 +188,11 @@ exports.saveUserPost = async function (req, res) {
       
       await uploadHelper.uploadBase64Image(fullPath, req.body.image, extension);
 
-      await fileUpload.uploadFileToSpace({
+      /*await fileUpload.uploadFileToSpace({
         binaryData: req.body.image,
         keyPath: `${storagePath}${fsImageName}`,
         extestion: extension
-      });
+      });*/
     } else if (req.body.image) {
       // Image already uploaded, extract filename only
       const imageStr = String(req.body.image);

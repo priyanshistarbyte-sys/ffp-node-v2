@@ -101,6 +101,20 @@ const buildQuery = {
         }else{
             return ' AND '+key+'="'+value+'"';
         }
+    },
+    'delete':function(tbl_name,where_args){
+        var where_condition = "";
+        Object.keys(where_args).forEach(function(key) {
+            if(where_condition==""){
+                where_condition = key+'="'+where_args[key]+'"';
+            }else{
+                where_condition += ' AND '+key+'="'+where_args[key]+'"';
+            }
+        });
+        
+        var query = 'DELETE FROM '+tbl_name+' WHERE '+where_condition;
+        console.log(query);
+        return query;
     }
 }
 

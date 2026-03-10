@@ -48,7 +48,7 @@ module.exports = {
   },
 
   /* ignore auth + encrption setting */
-  ignore_auth_urls: ['/v2/global-setting', '/v2/clear-cache'],
+  ignore_auth_urls: ['/api/v2/global-setting', '/api/v2/clear-cache'],
   ignore_encryption: ['/global-setting', '/v2/global-setting'],
 
   /* SMS Setting */

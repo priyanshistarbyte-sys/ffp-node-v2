@@ -4,11 +4,16 @@ const queryHelper = require('@/helper/query-helper');
 
 
 exports.checkOldPassword = (user_id,old_pass) => {
+    // Check if user_id is a number (id) or string (mobile)
+    const whereCondition = isNaN(user_id) 
+        ? { mobile: user_id, password: old_pass, role: 'User' }
+        : { id: user_id, password: old_pass };
+    
     return db.query(
         queryHelper.select(
             'id',
             'admin',
-            {'id':user_id,password:old_pass}
+            whereCondition
         )
     );
 }
@@ -26,7 +31,7 @@ exports.changePassword = async (user_id,new_pass) => {
 
 exports.deleteAccount = async (number) => {
     await db.query(
-        queryHelper.update('admin', { status: 0 }, { mobile:number,role:'User' })
+        queryHelper.delete('admin', { mobile: number, role: 'User' })
     );
     return true;
 }

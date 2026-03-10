@@ -3,7 +3,7 @@ const securityHelper = require("@/helper/security");
 const validation = require("@/helper/validation");
 const upload = require("@/helper/upload-helper");
 
-const fileUpload = require("@/utils/fileUpload");
+//const fileUpload = require("@/utils/fileUpload");
 
 const model = require(`@/models/${config.api_version}/family`);
 const { API_BASE_URL } = process.env;
@@ -46,11 +46,11 @@ exports.uploadBirthDayBase64Image = async function (req, res) {
 
   await upload.uploadBase64Image(fullPath, req.body.image, req.body.extestion);
 
-  await fileUpload.uploadFileToSpace({
+  /*await fileUpload.uploadFileToSpace({
     binaryData: req.body.image,
     keyPath: `${storagePath}${fileName}`,
     extestion: req.body.extestion,
-  });
+  });*/
 
   const responseJson = {
     status: true,

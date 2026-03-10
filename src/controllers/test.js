@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const fileUpload = require("@/utils/fileUpload");
+//const fileUpload = require("@/utils/fileUpload");
 
 const fileStore = async (req, res) => {
   const keyPath = "test/test1234.png";
@@ -13,7 +13,7 @@ const fileStore = async (req, res) => {
       // Convert the image data to a base64-encoded string
       const binaryData = data.toString("base64");
 
-      fileUpload.uploadFileToSpace({ keyPath, binaryData });
+      //fileUpload.uploadFileToSpace({ keyPath, binaryData });
 
       // Display or use the base64-encoded image as needed
       console.log("Base64-encoded image:", binaryData);

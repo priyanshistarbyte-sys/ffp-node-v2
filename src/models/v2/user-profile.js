@@ -4,7 +4,7 @@ const queryHelper = require("@/helper/query-helper");
 const uploadHelper = require("@/helper/upload-helper");
 const commonHelper = require("@/helper/common-helper");
 const paymentModel = require("./authentication");
-const fileUpload = require("@/utils/fileUpload");
+//const fileUpload = require("@/utils/fileUpload");
 const { API_BASE_URL } = process.env;
 
 exports.updateProfile = async (requestBody) => {
@@ -82,11 +82,11 @@ exports.updateProfile = async (requestBody) => {
       
       await uploadHelper.uploadBase64Image(fullPath, requestBody.image, extension);
 
-      await fileUpload.uploadFileToSpace({
+      /*await fileUpload.uploadFileToSpace({
         binaryData: requestBody.image,
         keyPath: `${storagePath}${fileName}`,
         extestion: extension,
-      });
+      });*/
 
       updateData.photo = dbPath + fileName;
     }
@@ -171,11 +171,11 @@ exports.uploadLogo = async (requestBody) => {
   
   await uploadHelper.uploadBase64Image(fullPath, requestBody.image, requestBody.extestion);
 
-  await fileUpload.uploadFileToSpace({
+  /*await fileUpload.uploadFileToSpace({
     binaryData: requestBody.image,
     keyPath: `${storagePath}${fileName}`,
     extestion: requestBody.extestion,
-  });
+  });*/
 
   updateData.photo = dbPath + fileName;
 

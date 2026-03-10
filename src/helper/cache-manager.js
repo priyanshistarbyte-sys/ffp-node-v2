@@ -3,6 +3,8 @@ const config = require('@/config/config');
 const queryHelper = require('./query-helper');
 const commonHelper = require('./common-helper');
 const fs = require("fs").promises;
+const path = require("path");
+const cachePath = path.join(__dirname, "../cache/cache.json");
 
 const { API_BASE_URL } = process.env;
 
@@ -11,7 +13,8 @@ exports.getDataFromCache = async (cacheKey) => {
     var foCacheDetails = {};
 
     try {
-        var fileCache = await fs.readFile("./src/cache/cache.json", "binary"); 
+        // var fileCache = await fs.readFile("../cache/cache.json", "binary"); 
+        var fileCache = await fs.readFile(cachePath, "binary"); 
         fileCache = JSON.parse(fileCache);
         return fileCache[cacheKey];
     } catch (error) {
@@ -221,7 +224,7 @@ exports.getDataFromCache = async (cacheKey) => {
             var foSubPlansLists = await db.query(
                 queryHelper.select(
                     '*',
-                    'subscription_plans_view',
+                    'subscription_plans_description',
                     {}
                 )
             );
@@ -274,7 +277,7 @@ exports.getDataFromCache = async (cacheKey) => {
         /* Subsctiption Plans */
 
         /* Write Cache File */
-        var responseJson = await fs.writeFile("./src/cache/cache.json", JSON.stringify(foCacheDetails), (err) => {
+        var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
             if (err)
                 console.log(err);
             else {
