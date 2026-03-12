@@ -5,9 +5,9 @@ const commonHelper = require('@/helper/common-helper');
 const sms_helper = require('@/helper/sms-helper');
 var md5 = require('md5');
 
-exports.userLogin = (mobile,password,contryCode) => {
+exports.userLogin = async (mobile,password,contryCode) => {
     var where ={ mobile:mobile,password:md5(password+config.SALT),role:'User' };
-    return db.query(
+    var [result] = await db.query(
         queryHelper.select(
             'id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at',
             'admin',
@@ -15,11 +15,12 @@ exports.userLogin = (mobile,password,contryCode) => {
             1
         )
     );
+    return result;
 }
 
 exports.getPaymentData = async (user_id) => {
     var where ={ user_id:user_id };
-    var foPaymentsList = await db.query(
+    var [foPaymentsList] = await db.query(
         queryHelper.select(
             'id,user_id,amount,date,transactionid,status,packageid,price,month,created_at',
             'payments',
@@ -27,10 +28,9 @@ exports.getPaymentData = async (user_id) => {
         )
     );
 
-    const payments = Array.isArray(foPaymentsList[0]) ? foPaymentsList[0] : foPaymentsList;
     var foPayments = [];
-    if(payments.length > 0){
-        payments.forEach(foSingleElement => {
+    if(foPaymentsList.length > 0){
+        foPaymentsList.forEach(foSingleElement => {
             foSingleElement.date = foSingleElement.date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.date,'d/F/Y'):'';
             foPayments.push(foSingleElement);
         });

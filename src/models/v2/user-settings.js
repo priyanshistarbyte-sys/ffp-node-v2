@@ -3,19 +3,20 @@ const config = require('@/config/config');
 const queryHelper = require('@/helper/query-helper');
 
 
-exports.checkOldPassword = (user_id,old_pass) => {
+exports.checkOldPassword = async (user_id,old_pass) => {
     // Check if user_id is a number (id) or string (mobile)
     const whereCondition = isNaN(user_id) 
         ? { mobile: user_id, password: old_pass, role: 'User' }
         : { id: user_id, password: old_pass };
     
-    return db.query(
+    var [result] = await db.query(
         queryHelper.select(
             'id',
             'admin',
             whereCondition
         )
     );
+    return result;
 }
 
 
@@ -37,15 +38,13 @@ exports.deleteAccount = async (number) => {
 }
 
 exports.checkExistingComplain = async (user_id) => {
-    const result = await db.query(
+    const [complaints] = await db.query(
         queryHelper.select(
             'id',
             'complain',
             {'user_id':user_id,"status !=":3}
         )
     );
-    // Handle MySQL2 result format [rows, fields]
-    const complaints = Array.isArray(result[0]) ? result[0] : result;
     return complaints;
 }
 
@@ -80,13 +79,10 @@ exports.insertComplain = async (request_body) => {
 
 exports.getUserComplains  = async (user_id) => {
     var where ={ user_id:user_id };
-    var foComapainLists = await db.query(
+    var [complaints] = await db.query(
         queryHelper.select('id,complain_id,user_id,subject,message,reply,remark,status,created_at,updated_at','complain',where,"id")
     );
-    
-    // Handle MySQL2 result format
-    const complaints = Array.isArray(foComapainLists[0]) ? foComapainLists[0] : foComapainLists;
-    
+        
     var foComapain = [];
     if(complaints.length >  0){
         complaints.forEach(foSingleElement => {
@@ -107,11 +103,9 @@ exports.getUserComplains  = async (user_id) => {
 
 exports.getBusinessDetails  = async (user_id) => {
     var where ={ id:user_id };
-    const result = await db.query(
+    const [users] = await db.query(
         queryHelper.select('business_name,mobile','admin',where,"",1)
     );
-    // Handle MySQL2 result format
-    const users = Array.isArray(result[0]) ? result[0] : result;
     return users;
 }
 
@@ -131,11 +125,11 @@ exports.insertUserFeedback = async (request_body) => {
 
 exports.getUserTempPost  = async (user_id,temp_id) => {
     var where ={ user_id:user_id,tamp_id:temp_id };
-    const result = await db.query(
+    const [result] = await db.query(
         queryHelper.select('post,id','makepost',where,"",1)
     );
     // Handle MySQL2 result format
-    return Array.isArray(result[0]) ? result[0] : result;
+    return result;
 }
 
 exports.addUserPost  = async (image,user_id,temp_id,id) => {
@@ -144,8 +138,8 @@ exports.addUserPost  = async (image,user_id,temp_id,id) => {
     );
     
     const userFilter ={ user_id };
-    const userCount = await db.query(
-         queryHelper.select('id','daily_post_count',userFilter,"",1)
+    const [userCount] = await db.query(
+        queryHelper.select('id','daily_post_count',userFilter,"",1)
      );
 
      if(userCount?.length > 0){
@@ -199,20 +193,20 @@ exports.addUserPost  = async (image,user_id,temp_id,id) => {
 
 exports.getActiveCoupon  = async (coupon) => {
    var where ={ 'code':coupon,'total_qty > total_count_user_apply' : '','start_date <= ':config.CURRENT_DATE(),'end_date >= ':config.CURRENT_DATE(),'status':1 };
-   const result = await db.query(
+   const [result] = await db.query(
         queryHelper.select('id,total_days,title','coupon_code',where,"",1)
    );
    // Handle MySQL2 result format
-   return Array.isArray(result[0]) ? result[0] : result;
+   return result;
 }
 
 exports.checkUserPaid  = async (user_id) => {
    var where ={ 'ispaid':0,'expdate' : null,'planStatus':null,'id':user_id,'role':'User' };
-   const result = await db.query(
+   const [result] = await db.query(
         queryHelper.select('id','admin',where,"",1)
    );
    // Handle MySQL2 result format
-   return Array.isArray(result[0]) ? result[0] : result;
+   return result;
 }
 
 
@@ -238,8 +232,8 @@ exports.updateCouponUseCount = async (id) => {
 
 
 exports.getCouponCode = async () => {
-    const result = await db.query(
+    const [result] = await db.query(
         queryHelper.select('id,title,name,code,total_qty,start_date,end_date,total_days,total_count_user_apply,note,status','coupon_code',{ status: 1 },'id')
     );
-    return Array.isArray(result[0]) ? result[0] : result;
+    return result;
 }

@@ -1,18 +1,19 @@
 const db = require('@/config/database');
 const queryHelper = require('@/helper/query-helper');
 
-exports.checkUserPlan = (user_id) => {
-    return db.query(
+exports.checkUserPlan = async (user_id) => {
+    var [result] = await db.query(
         queryHelper.select(
             'ispaid,expdate,status,mobile,b_email,business_category_id,free_post_count,planStatus',
             'admin',
             {'id':user_id}
         )
     );
+    return result;
 }
 
-exports.getUserPlanDetails = (user_id) => {
-    return db.query(
+exports.getUserPlanDetails = async (user_id) => {
+    var [result] = await db.query(
         queryHelper.join(
             'p.packageid,s.plan_name',
             'payments as p',
@@ -22,6 +23,7 @@ exports.getUserPlanDetails = (user_id) => {
             1
         )
     );
+    return result;
 }
 
 exports.planExpired = (user_id) => {
@@ -37,7 +39,7 @@ exports.planExpired = (user_id) => {
 
 
 exports.checkUserTokenExistWithDevice = async (where) => {
-    var exist = await db.query(
+    var [exist] = await db.query(
         queryHelper.select(
             'id',
             'notification',
@@ -55,7 +57,7 @@ exports.checkUserTokenExistWithDevice = async (where) => {
 }
 
 exports.checkTokenWithUserOrDevice = async (user_id,device_id) => {
-    var exist = await db.query(
+    var [exist] = await db.query(
         'select id from notification where user_id="'+user_id+'" OR device_id="'+device_id+'"'
     );
     if(exist.length > 1){

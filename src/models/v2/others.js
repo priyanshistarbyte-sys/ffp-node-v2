@@ -7,9 +7,10 @@ const { API_BASE_URL } = process.env;
 
 exports.getFAQs = async () => {
     var where ={ status:1 };
-    return await db.query(
+    var [result] = await db.query(
         queryHelper.select('id,question,answer,created_at,img,link','faq',where)
     );
+    return result;
 }
 
 exports.setVideoAnylitics = async () => {

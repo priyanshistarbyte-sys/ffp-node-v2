@@ -62,12 +62,12 @@ var sms_helper = {
   async gateway_type() {
     const where = { option_name: 'sms_gateway_type' };
 
-    const result = await db.query(
+    const [result] = await db.query(
       queryHelper.select('value', 'setting', where, 'id desc', 1)
     );
 
     if (result && result[0] && result[0].length > 0) {
-      return result[0][0].value;
+      return result[0].value;
     }
 
     return 'bulksms';
@@ -201,7 +201,7 @@ var sms_helper = {
    
     if (page == 'forgotpassword') {
       const where = { mobile };
-      const foUserDetails = await db.query(
+      const [foUserDetails] = await db.query(
         queryHelper.select(
           'business_name,expdate,b_email',
           'admin',
@@ -292,7 +292,7 @@ var sms_helper = {
 
   async send_other_sms(mobile, page, term) {
     const where = { mobile };
-    const foUserDetails = await db.query(
+    const [foUserDetails] = await db.query(
       queryHelper.select(
         'name,business_name,expdate,b_email',
         'admin',

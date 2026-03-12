@@ -16,8 +16,8 @@ const commonHelper = require('@/helper/common-helper');
 //         )
 //     );
 // }
-exports.getTodayPosts = (limit = "") => {
-    return db.query(
+exports.getTodayPosts = async (limit = "") => {
+    var [result] = await db.query(
         queryHelper.join(
             `
             t.id,
@@ -68,6 +68,7 @@ exports.getTodayPosts = (limit = "") => {
             limit
         )
     );
+    return result;
 };
 
 // exports.getUpcomingPosts = (limit="") => {
@@ -91,7 +92,7 @@ exports.getTodayPosts = (limit = "") => {
 //     );
 // }
 
-exports.getUpcomingPosts = (limit="") => {
+exports.getUpcomingPosts = async (limit="") => {
 
     // TODAY (start)
     const startDate = new Date();
@@ -103,7 +104,7 @@ exports.getUpcomingPosts = (limit="") => {
     console.log("Start Date:", commonHelper.formatDate(startDate));
     console.log("End Date:", commonHelper.formatDate(endDate));
 
-    return db.query(
+    var [result] = await db.query(
         queryHelper.select(
             'id,category_id,image,event_date,mtitle,mslug,status,lable,lablebg,noti_banner,noti_quote,plan_auto,created_at,updated_at',
             'sub_categories',
@@ -116,10 +117,11 @@ exports.getUpcomingPosts = (limit="") => {
             limit
         )
     );
+    return result;
 }
 
-exports.getTodayVideoPost = (limit="") => {
-    return db.query(
+exports.getTodayVideoPost = async (limit="") => {
+    var [result] = await db.query(
         queryHelper.join(
             'v.id,v.sub_category_id,v.type,v.free_paid,v.path,v.thumb,v.lable,v.lablebg,v.status,v.created_at,v.updated_at,s.id,s.event_date',
             'sub_categories as s',
@@ -128,5 +130,6 @@ exports.getTodayVideoPost = (limit="") => {
             limit
         )
     );
+    return result;
 }
 

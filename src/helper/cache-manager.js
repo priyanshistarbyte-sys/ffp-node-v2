@@ -94,7 +94,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
         
         /* appMasterAP */
-         var foAllSettingData = await db.query(
+         var [foAllSettingData] = await db.query(
             queryHelper.select(
                 'id, option_name,value',
                 'setting',
@@ -103,9 +103,8 @@ exports.getDataFromCache = async (cacheKey) => {
         );
 
         if(foAllSettingData.length > 0){
-            const settingData = Array.isArray(foAllSettingData[0]) ? foAllSettingData[0] : foAllSettingData;
             var foAllSetting = {};
-            settingData.forEach(element => {
+            foAllSettingData.forEach(element => {
                 foAllSetting[element.option_name] = element.value;
             });
 
@@ -148,7 +147,7 @@ exports.getDataFromCache = async (cacheKey) => {
         /* appMasterAP */
 
         /* Home Screen Slider */
-        var foAppSliderData = await db.query(
+        var [foAppSliderData] = await db.query(
             queryHelper.select(
                 'title,image,mid,sub,url,sort,festivalDate',
                 'appslider',
@@ -159,9 +158,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
         if(foAppSliderData.length > 0){
             var foAppSlider = [];
-            // Handle MySQL2 result format
-            const sliderData = Array.isArray(foAppSliderData[0]) ? foAppSliderData[0] : foAppSliderData;
-            sliderData.forEach(foSingleElement => {
+            foAppSliderData.forEach(foSingleElement => {
                 foSingleElement.festivalDate = commonHelper.formatDate(foSingleElement.festivalDate);
                 // Handle full path images from database
                 if(foSingleElement.image && foSingleElement.image !== '' && foSingleElement.image !== '0') {
@@ -178,7 +175,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
 
         /* Main Category */
-        var foMainCategoryLists = await db.query(
+        var [foMainCategoryLists] = await db.query(
             queryHelper.select(
                 '*',
                 'all_main_categories',
@@ -215,7 +212,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
         /* Subsctiption Plans */
         try {
-            var foSubPlansLists = await db.query(
+            var [foSubPlansLists] = await db.query(
                 queryHelper.select(
                     '*',
                     'subscription_plans_description',
@@ -271,13 +268,13 @@ exports.getDataFromCache = async (cacheKey) => {
         /* Subsctiption Plans */
 
         /* Write Cache File */
-        /*var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
+        var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
             if (err)
                 console.log(err);
             else {
                 console.log("File written successfully\n");
             }
-        });*/
+        });
         return foCacheDetails[cacheKey];
     }
 

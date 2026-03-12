@@ -238,7 +238,7 @@ exports.getTodayPosts = async function (req, res) {
 
 exports.getUpcomingPosts = async function (req, res) {
 
-  const [rows] = await model.getUpcomingPosts();
+  const rows = await model.getUpcomingPosts();
 
   const grouped = {};
 

@@ -5,13 +5,11 @@ const commonHelper = require('@/helper/common-helper');
 const { API_BASE_URL } = process.env;
 
 exports.getAllCategories = async () => {
-    const result = await db.query(
+    const [categories] = await db.query(
         queryHelper.select('*', 'categories', {}, 'sort ASC')
     );
 
-    const categories = Array.isArray(result[0]) ? result[0] : result;
-    const foMainCategories = [];
-    
+    const foMainCategories = [];    
     if (categories.length > 0) {
         categories.forEach(cat => {
             if (cat.icon) {
@@ -39,7 +37,7 @@ exports.getSubCategories = async (category_id) => {
     where.status = 1;
     where.category_id = category_id;
 
-    var foCategoryLists = await db.query(
+    var [categories] = await db.query(
         queryHelper.select(
             'id, category_id, is_child, parent_category, image, event_date, mtitle, mslug, status, lable, lablebg, noti_banner, noti_quote, plan_auto, is_trending, created_at, updated_at',
             'sub_categories',
@@ -47,9 +45,6 @@ exports.getSubCategories = async (category_id) => {
             order_by
         )
     );
-    
-    // Handle MySQL2 result format
-    const categories = Array.isArray(foCategoryLists[0]) ? foCategoryLists[0] : foCategoryLists;
     var foCategory = [];
     if(categories.length > 0){
         categories.forEach(foSingleElement => {
@@ -77,7 +72,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
     var where =  { "t.sub_category_id":sub_category_id };
     // var order_by = "rand()";
     var order_by = "t.id desc";
-    var foTemplatesLists = await db.query(
+    var [templates] = await db.query(
         queryHelper.join(
             't.id,t.planImgName,t.free_paid,t.event_date,t.sub_category_id,t.path,t.font_type,t.font_size,t.font_color,t.lable,t.lablebg,t.created_at,t.updated_at,s.id,\
              s.mslug as cat_slug,IFNULL(t.mask,"") AS mask,t.has_mask,s.mtitle as cat_name,s.plan_auto,s.is_trending,t.language',
@@ -89,8 +84,6 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
         )
     );
 
-    // Handle MySQL2 result format
-    const templates = Array.isArray(foTemplatesLists[0]) ? foTemplatesLists[0] : foTemplatesLists;
     var foTemplates = [];
     if(templates.length > 0){
         templates.forEach(foSingleElement => {
@@ -146,7 +139,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
 }
 
 exports.getAllVideoByCategoryID = async (sub_category_id) => {
-    var foVideoLists = await db.query(
+    var [videos] = await db.query(
         queryHelper.join(
             'v.id,v.sub_category_id ,v.type,v.free_paid,v.path,v.thumb,v.lable,v.lablebg,v.status,v.created_at,v.updated_at,s.event_date',
             'videogif as v',
@@ -155,8 +148,6 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
         )
     );
 
-    // Handle MySQL2 result format
-    const videos = Array.isArray(foVideoLists[0]) ? foVideoLists[0] : foVideoLists;
     var foVideos = [];
     if(videos.length > 0){
         videos.forEach(foSingleElement => {
@@ -180,7 +171,7 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
 exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
     /* Order by sequance takes time on query so we do it manually order by */
-    var foHomePagePostsLists = await db.query(
+    var [homePagePosts] = await db.query(
         queryHelper.join(
             'h.home_category_id,h.home_sub_category_id,h.home_title,h.sequence,h.home_status,h.is_show_on_home,h.is_new,\
             h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,h.template_lable,h.template_lablebg,\
@@ -191,8 +182,6 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
         )
     );
 
-    // Handle MySQL2 result format
-    const homePagePosts = Array.isArray(foHomePagePostsLists[0]) ? foHomePagePostsLists[0] : foHomePagePostsLists;
     var foHomePagePosts = [];
     if(homePagePosts.length > 0){
         var foCategoryWisePosts = [];
@@ -322,7 +311,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         ORDER BY p.id DESC
     `;
     
-    const [categoriesResult, subCategoriesResult, templatesResult, videosResult, postsResult] = await Promise.all([
+    const [[categoriesResult], [subCategoriesResult], [templatesResult], [videosResult], [postsResult]] = await Promise.all([
         db.query(categoriesQuery, [searchPattern]),
         db.query(subCategoriesQuery, [searchPattern]),
         db.query(templatesQuery, [searchPattern]),
@@ -330,11 +319,11 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         db.query(postsQuery, [searchPattern])
     ]);
     
-    const categories = Array.isArray(categoriesResult[0]) ? categoriesResult[0] : categoriesResult;
-    const subCategories = Array.isArray(subCategoriesResult[0]) ? subCategoriesResult[0] : subCategoriesResult;
-    const templates = Array.isArray(templatesResult[0]) ? templatesResult[0] : templatesResult;
-    const videos = Array.isArray(videosResult[0]) ? videosResult[0] : videosResult;
-    const posts = Array.isArray(postsResult[0]) ? postsResult[0] : postsResult;
+    const categories = categoriesResult;
+    const subCategories = subCategoriesResult;
+    const templates = templatesResult;
+    const videos = videosResult;
+    const posts = postsResult;
     
     // Format categories
     const formattedCategories = categories.map(cat => ({

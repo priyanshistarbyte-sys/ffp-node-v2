@@ -21,8 +21,7 @@ exports.userLogin = async function (req, res) {
     data: [],
   };
 
-  const foUserList = await authenticationModel.userLogin(req.body.mobile, req.body.password, req.body.contryCode);
-  const users = Array.isArray(foUserList[0]) ? foUserList[0] : foUserList;
+  const users = await authenticationModel.userLogin(req.body.mobile, req.body.password, req.body.contryCode);
   if (users.length > 0) {
     const foUser = users[0];
     if (foUser.status != 1) {

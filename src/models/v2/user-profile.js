@@ -70,8 +70,8 @@ exports.updateProfile = async (requestBody) => {
       const dbPath = "uploads/images/business_logo/";
 
       // Remove old logo if exists
-      const logoname = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
-      const oldLogo = Array.isArray(logoname[0]) ? logoname[0][0] : logoname[0];
+      const [logoname] = await db.query(queryHelper.select("photo", "admin", { id: requestBody.user_id }));
+      const oldLogo = logoname[0];
       if (oldLogo?.photo && oldLogo.photo !== "") {
         const fileName = oldLogo.photo.startsWith(dbPath) ? oldLogo.photo.replace(dbPath, "") : oldLogo.photo;
         uploadHelper.removeImage(storagePath + fileName);
@@ -100,7 +100,7 @@ exports.updateProfile = async (requestBody) => {
 
 exports.getUserProfile = async (userId) => {
   const where = { id: userId, role: "User" };
-  let foUser = await db.query(
+  let [users] = await db.query(
     queryHelper.select(
       "id,name,business_name,photo,mobile,email,b_email,b_mobile2,b_website,ispaid,expdate,planStatus,gender,address,status,note,last_login,created_at,updated_at,gst_firm_name,gst_no,owner_name,owner_birth_date,business_anniversary_date,business_category_id,referral_code,used_referral_code",
       "admin",
@@ -110,8 +110,6 @@ exports.getUserProfile = async (userId) => {
     ),
   );
   
-  // Handle MySQL2 result format
-  const users = Array.isArray(foUser[0]) ? foUser[0] : foUser;
   if (users.length > 0) {
     foUser = users[0];
 
@@ -137,7 +135,7 @@ exports.getUserProfile = async (userId) => {
 
 exports.getUserPosts = async (userId) => {
   const where = { user_id: userId };
-  const foPostsLists = await db.query(
+  const [foPostsLists] = await db.query(
     queryHelper.select("post,created_at", "makepost", where, "id desc"),
   );
   const foPosts = [];
