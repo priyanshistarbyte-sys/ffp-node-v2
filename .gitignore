@@ -25,3 +25,4 @@ logs
 node_modules
 .env
 ffp-node-v2.zip
+src/cache/cache.json

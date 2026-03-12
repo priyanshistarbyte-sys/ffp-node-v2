@@ -51,7 +51,8 @@ exports.userLogin = async function (req, res) {
 };
 
 exports.forgotRegisterSendOTP = async function (req, res) {
-  const errors = validation.validate(req.body, "page,mobile,sshcode");
+  const requiredFields = req.body.page === "signup" ? "page,mobile,password,sshcode" : "page,mobile,sshcode";
+  const errors = validation.validate(req.body, requiredFields);
   if (errors.length > 0) {
     return validation.errorMessage(req, res, errors);
   }

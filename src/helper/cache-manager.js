@@ -29,23 +29,20 @@ exports.getDataFromCache = async (cacheKey) => {
 
         try {
             /* getNewAdsmobList */
-            console.log('Starting getNewAdsmobList query...');
-            var foApplicationAd = await db.query(
+            var [foApplicationAd] = await db.query(
                 queryHelper.select(
                     'id,status,adclick,mode',
                     'application_add',
                     {}
                 )
             );
-            console.log('foApplicationAd result:', foApplicationAd);
-
             if(foApplicationAd.length > 0){
                 foApplicationAd = foApplicationAd[0];
                 foApplicationAd.openadd="1";
                 foApplicationAd.backadd="1";
 
                 /* Get Add Type */
-                var foAdsListAll = await db.query(
+                var [foAdsListAll] = await db.query(
                     queryHelper.select(
                         'ads_title,ads_id,ads_type',
                         'ads_api',
@@ -58,22 +55,22 @@ exports.getDataFromCache = async (cacheKey) => {
                     var type = element.ads_type=="1"?'google' : 'facebook';
                     foResult[type][element.ads_title]=element.ads_id;
                 });
-
-
-                var foDialog = await db.query(
+                
+                
+                var [foDialog] = await db.query(
                     queryHelper.select(
                         'title,description,button1,button2,link,image,appversion,forcefully,other_forcefully,isDisplay,other_isDisplay,o_type,o_link',
                         'dailog',
                         {}
                     )
                 );
-
+                
                 if(foDialog.length > 0){
                     foDialog[0].image = foDialog[0].image && foDialog[0].image !== '' ? 
-                        `${API_BASE_URL}/storage/uploads/images/application_dailog_image/${foDialog[0].image}` : '';
+                    `${API_BASE_URL}/storage/uploads/images/application_dailog_image/${foDialog[0].image}` : '';
                     foResult.dailog = foDialog[0];
                 }
-
+                
                 foApplicationAd.result = {};
                 foApplicationAd.result = foResult;
                 foCacheDetails.getNewAdsmobList = foApplicationAd;
@@ -104,14 +101,11 @@ exports.getDataFromCache = async (cacheKey) => {
                 {}
             )
         );
-        console.log('foAllSettingData from DB:', foAllSettingData);
 
         if(foAllSettingData.length > 0){
             const settingData = Array.isArray(foAllSettingData[0]) ? foAllSettingData[0] : foAllSettingData;
             var foAllSetting = {};
-            console.log('Processed foAllSetting:');
             settingData.forEach(element => {
-                console.log('Processed foAllSetting:', element.option_name);
                 foAllSetting[element.option_name] = element.value;
             });
 
@@ -163,8 +157,6 @@ exports.getDataFromCache = async (cacheKey) => {
             )
         );
 
-        console.log('foAppSliderData from DB:', foAppSliderData);
-
         if(foAppSliderData.length > 0){
             var foAppSlider = [];
             // Handle MySQL2 result format
@@ -180,7 +172,6 @@ exports.getDataFromCache = async (cacheKey) => {
                 foAppSlider.push(foSingleElement);
             });
             
-            console.log('Processed foAppSlider:', foAppSlider);
             foCacheDetails.foAppSlider = foAppSlider;
         }
         /* Home Screen Slider */
@@ -280,13 +271,13 @@ exports.getDataFromCache = async (cacheKey) => {
         /* Subsctiption Plans */
 
         /* Write Cache File */
-        var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
+        /*var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
             if (err)
                 console.log(err);
             else {
                 console.log("File written successfully\n");
             }
-        });
+        });*/
         return foCacheDetails[cacheKey];
     }
 

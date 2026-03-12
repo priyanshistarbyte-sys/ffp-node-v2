@@ -13,7 +13,7 @@ const buildQuery = {
         if(limit!=0){
             query+=" LIMIT "+limit;
         }
-        console.log(query);
+        // console.log(query);
         return query;
     },
     'insert':function(tbl_name,option_args){

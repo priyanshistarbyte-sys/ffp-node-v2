@@ -49,14 +49,27 @@ var sms_helper = {
     });
   },
 
+  // async gateway_type() {
+  //   const where = { option_name: 'sms_gateway_type' };
+  //   const foSetting = await db.query(
+  //     queryHelper.select('value', 'setting', where, 'id desc', 1),
+  //   );
+  //   if (foSetting.length > 0) {
+  //     return foSetting[0].value;
+  //   }
+  //   return 'bulksms';
+  // },
   async gateway_type() {
     const where = { option_name: 'sms_gateway_type' };
-    const foSetting = await db.query(
-      queryHelper.select('value', 'setting', where, 'id desc', 1),
+
+    const result = await db.query(
+      queryHelper.select('value', 'setting', where, 'id desc', 1)
     );
-    if (foSetting.length > 0) {
-      return foSetting[0].value;
+
+    if (result && result[0] && result[0].length > 0) {
+      return result[0][0].value;
     }
+
     return 'bulksms';
   },
 
@@ -103,58 +116,21 @@ var sms_helper = {
 
   async msg91otp(mobile, template_id, otp, sshcode) {
     const data = {
-      OTP: otp,
-      var: sshcode,
-    };
-    try {
-      const res = await axios.post(
-        `https://control.msg91.com/api/v5/otp?template_id=${
-          template_id
-        }&mobile=${
-          mobile}`,
-        JSON.stringify(data),
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            accept: 'application/json',
-            authkey: '394115Am2eyNc3i642e5bdcP1',
-          },
-        },
-      );
-      console.log('SMS Provider Response', res);
-    } catch (err) {
-      const error = 'Something error on send sms with '
-        + `https://control.msg91.com/api/v5/otp?template_id=${
-          template_id
-        }&mobile=${
-          mobile}`;
-      console.error(`Error Details : ${err}`);
-      // var fileCache = await fs.appendFile("./cache/err.txt", JSON.stringify({ 'mobile':mobile,'api':'msg91-otp','error':err,'created_at':commonHelper.customFormatDate(new Date(),'Y-m-d h:i:s') }));
-      await db.query(
-        queryHelper.insert('sms_error_log', {
-          mobile,
-          api: 'msg91-otp',
-          error: err,
-          created_at: commonHelper.customFormatDate(new Date(), 'Y-m-d h:i:s'),
-        }),
-      );
-    }
-    return true;
-  },
-
-  async msg91sms(mobile, template_id, var1, var2, var3) {
-    const sender = 'BRFOTO';
-    const data = {
-      template_id,
-      sender,
+      template_id: template_id,
+      sender: 'BRFOTO',
       short_url: '0',
       mobiles: mobile,
-      var1,
-      var2,
-      var3,
+      var1: otp,
+      var2: sshcode,
+      var3: '',
     };
+    console.log('=== MSG91 OTP Request ===');
+    console.log('Mobile:', mobile);
+    console.log('Template ID:', template_id);
+    console.log('OTP:', otp);
+    console.log('SSH Code:', sshcode);
+    console.log('Full Data:', JSON.stringify(data, null, 2));
     try {
-      /* console.log(data); */
       const res = await axios.post(
         'https://control.msg91.com/api/v5/flow/',
         JSON.stringify(data),
@@ -166,25 +142,63 @@ var sms_helper = {
           },
         },
       );
-      console.log('SMS Provider Response', res);
+      console.log('MSG91 OTP Response:', JSON.stringify(res.data, null, 2));
+      return { success: true, data: res.data };
     } catch (err) {
-      console.error('Something error on send sms with data', data);
-      console.error(`Error Details : ${err}`);
-      const error = `Template id : ${template_id}`;
-      // var fileCache = await fs.appendFile("./cache/err.txt", JSON.stringify({ 'mobile':mobile,'api':'msg91-sms','error':err,'created_at':commonHelper.customFormatDate(new Date(),'Y-m-d h:i:s') }));
+      console.error('MSG91 OTP Error:', err.response?.data || err.message);
+      await db.query(
+        queryHelper.insert('sms_error_log', {
+          mobile,
+          api: 'msg91-otp',
+          error: JSON.stringify(err.response?.data || err.message),
+          created_at: commonHelper.customFormatDate(new Date(), 'Y-m-d h:i:s'),
+        }),
+      );
+      return { success: false, error: err.response?.data || err.message };
+    }
+  },
+
+  async msg91sms(mobile, template_id, var1, var2, var3) {
+    const data = {
+      template_id: template_id,
+      sender: 'BRFOTO',
+      short_url: '0',
+      mobiles: mobile,
+      var1,
+      var2,
+      var3,
+    };
+    try {
+      const res = await axios.post(
+        'https://control.msg91.com/api/v5/flow/',
+        JSON.stringify(data),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            accept: 'application/json',
+            authkey: '394115Am2eyNc3i642e5bdcP1',
+          },
+        },
+      );
+      console.log('MSG91 SMS Response:', res.data);
+      return { success: true, data: res.data };
+    } catch (err) {
+      console.error('MSG91 SMS Error:', err.response?.data || err.message);
       await db.query(
         queryHelper.insert('sms_error_log', {
           mobile,
           api: 'msg91-sms',
-          error,
+          error: JSON.stringify(err.response?.data || err.message),
           created_at: commonHelper.customFormatDate(new Date(), 'Y-m-d h:i:s'),
         }),
       );
+      return { success: false, error: err.response?.data || err.message };
     }
-    return true;
   },
 
   async send_otp_sms(mobile, otp, page, country_code, ssh_code) {
+  
+   
     if (page == 'forgotpassword') {
       const where = { mobile };
       const foUserDetails = await db.query(
@@ -221,7 +235,6 @@ var sms_helper = {
             `${API_BASE_URL}/api/nodeSideEmailSend`,
             formData,
           );
-          console.log(abc);
         } catch (error) {
           console.error('Forgot password email API error:', error.message);
         }
@@ -261,6 +274,8 @@ var sms_helper = {
     /* FFP APP */
 
     const sms_gateway_type = await sms_helper.gateway_type();
+    console.log(sms_gateway_type);
+    
     if (sms_gateway_type == 'bulksms') {
       await sms_helper.bulk_sms(mobile, message, DLT_TE_ID);
     }
@@ -268,31 +283,10 @@ var sms_helper = {
       await sms_helper.windexsms(country_code, mobile, message, DLT_TE_ID);
     }
     if (sms_gateway_type == 'msg91') {
-      /* await sms_helper.msg91otp("91"+mobile,msg91_tamp_id,otp,ssh_code); */
-
-      const formData1 = new FormData();
-      formData1.append(
-        'mytoken',
-        'mVfHmPbTudbqJBWMiqoAPA91bH6gSTssOVJwlpJeuIVwdSbZGFUd4b7HoNZ5FyaNN4LVLbdmffp9',
-      );
-      formData1.append('mobile', `91${mobile}`);
-      formData1.append('msg91_tamp_id', msg91_tamp_id);
-      formData1.append('otp', otp);
-      formData1.append('sshcode', ssh_code);
-      formData1.append('sms_type', 'otp');
-      formData1.append('var1', '');
-      formData1.append('var2', '');
-      formData1.append('var3', '');
-
-      try {
-        const abc = await axios.post(
-          `${API_BASE_URL}/api/nodeSideSMSSend`,
-          formData1,
-        );
-        console.log(abc);
-      } catch (error) {
-        console.error('OTP SMS API error:', error.message);
-      }
+      const result = await sms_helper.msg91otp(`91${mobile}`, msg91_tamp_id, otp, ssh_code);
+      console.log('SMS sent to mobile:', mobile);
+      console.log('Template ID:', msg91_tamp_id);
+      console.log('Result:', result);
     }
   },
 
@@ -443,31 +437,8 @@ var sms_helper = {
       await sms_helper.windexsms('91', mobile, message, DLT_TE_ID);
     }
     if (sms_gateway_type == 'msg91') {
-      // await sms_helper.msg91sms("91"+mobile,msg91_tamp_id,var1,var2,var3);
-
-      const formData1 = new FormData();
-      formData1.append(
-        'mytoken',
-        'mVfHmPbTudbqJBWMiqoAPA91bH6gSTssOVJwlpJeuIVwdSbZGFUd4b7HoNZ5FyaNN4LVLbdmffp9',
-      );
-      formData1.append('mobile', `91${mobile}`);
-      formData1.append('msg91_tamp_id', msg91_tamp_id);
-      formData1.append('otp', '');
-      formData1.append('sshcode', '');
-      formData1.append('sms_type', 'sms');
-      formData1.append('var1', var1);
-      formData1.append('var2', var2);
-      formData1.append('var3', var3);
-
-      try {
-        const abc = await axios.post(
-          `${API_BASE_URL}/api/nodeSideSMSSend`,
-          formData1,
-        );
-        console.log(abc);
-      } catch (error) {
-        console.error('SMS API error:', error.message);
-      }
+      const result = await sms_helper.msg91sms(`91${mobile}`, msg91_tamp_id, var1, var2, var3);
+      console.log('SMS Result:', result);
     }
 
     if (b_email != '' && email_tamp_name != '') {

@@ -8,16 +8,16 @@ const { API_BASE_URL } = process.env;
 module.exports = {
   name: 'Free Festival Post',
   db: {
-    database: 'ffp',
+    database: 'festivalpost',
     user: 'root',
     pwd: '',
     host: 'localhost',
   },
   db_live: {
-    database: 'free_ffp_new',
-    user: 'free_ffp_new',
-    pwd: 'v8vovo8mg%KJ2fw7',
-    host: 'localhost',
+    database: 'bran_fotos',
+    user: 'bran_fotos',
+    pwd: 'Brand@fotos@123',
+    host: '127.0.0.1',
   },
   jwt_secret: 'QAZxswced@123!@!',
   mail: {
