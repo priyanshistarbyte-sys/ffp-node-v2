@@ -4,18 +4,57 @@ const queryHelper = require('@/helper/query-helper');
 const commonHelper = require('@/helper/common-helper');
 const { API_BASE_URL } = process.env;
 
+// exports.getAllCategories = async () => {
+//     const [categories] = await db.query(
+//         queryHelper.select('*', 'categories', {}, 'sort ASC')
+//     );
+
+//     const foMainCategories = [];    
+//     if (categories.length > 0) {
+//         categories.forEach(cat => {
+//             if (cat.icon) {
+//                 cat.icon = `${API_BASE_URL}/storage/${cat.icon}`;
+//             }
+//             foMainCategories.push(cat);
+//         });
+//     }
+
+//     return foMainCategories;
+// }
+
 exports.getAllCategories = async () => {
     const [categories] = await db.query(
-        queryHelper.select('*', 'categories', {}, 'sort ASC')
+        queryHelper.join(
+            'c.id as category_id, c.title as cat_title, c.sort, c.icon, sc.id as sub_category_id, sc.image, sc.mtitle, sc.mslug, sc.lable, sc.lablebg, sc.plan_auto',
+            'categories as c',
+            [['sub_categories as sc', 'c.id = sc.category_id', 'left']],
+            {'sc.status': 1},
+            'c.sort ASC'
+        )
     );
 
+    console.log('test');
+    console.log(API_BASE_URL);
+    
     const foMainCategories = [];    
     if (categories.length > 0) {
         categories.forEach(cat => {
-            if (cat.icon) {
-                cat.icon = `${API_BASE_URL}/storage/${cat.icon}`;
-            }
-            foMainCategories.push(cat);
+            const formattedCat = {
+                category_id: cat.category_id,
+                cat_title: cat.cat_title,
+                sort: cat.sort,
+                sub: cat.sub_category_id ? 1 : 0,
+                icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null,
+                sub_category_id: cat.sub_category_id,
+                image: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : null,
+                mtitle: cat.mtitle,
+                mslug: cat.mslug,
+                lable: cat.lable || '',
+                lablebg: cat.lablebg || '',
+                plan_auto: cat.plan_auto,
+                thumb: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : null
+            };
+            foMainCategories.push(formattedCat);
         });
     }
 
