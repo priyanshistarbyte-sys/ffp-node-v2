@@ -209,54 +209,53 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
 
 exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
-    /* Order by sequance takes time on query so we do it manually order by */
     var [homePagePosts] = await db.query(
         queryHelper.join(
-            'h.home_category_id,h.home_sub_category_id,h.home_title,h.sequence,h.home_status,h.is_show_on_home,h.is_new,\
-            h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,h.template_lable,h.template_lablebg,\
-            h.planImgName,h.created_at,h.updated_at,s.mslug as cat_slug,s.mtitle as cat_name,s.plan_auto',
+            'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.home_status,h.is_new,' +
+            'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
+            'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
+            'c.icon as cat_icon,sc.image as cat_image',
             'home_page_category_wise_posts as h',
-            [['sub_categories as s','h.home_sub_category_id=s.id','left']],
-            {"h.home_status":1}
+            [
+                ['categories as c', 'h.category_id = c.id', 'left'],
+                ['sub_categories as sc', 'h.sub_category_id = sc.id', 'left']
+            ],
+            { "h.home_status": 1 }
         )
     );
 
-    var foHomePagePosts = [];
+    var foFinalArray = [];
     if(homePagePosts.length > 0){
-        var foCategoryWisePosts = [];
+        var foCategoryWisePosts = {};
         homePagePosts.forEach(foSingleElement => {
-            foSingleElement.event_date = foSingleElement.sub_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.sub_event_date,'d, F Y'):'';
+            foSingleElement.event_date = foSingleElement.sub_event_date && foSingleElement.sub_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.sub_event_date,'d, F Y'):'';
 
             var plan = 'no';
             var auto = 'yes';
-            if(foSingleElement.planImgName!=""){
-                // console.log(foSingleElement);
+            if(foSingleElement.planImgName && foSingleElement.planImgName!=""){
                 plan = "yes";
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id+".jpg";
                 foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.template_id+".jpg";
-            }else{
-                //  console.log(foSingleElement);
+            }else if(foSingleElement.path && foSingleElement.path!=""){
                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
                     plan = 'yes';
                     auto = 'no';
-                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
-                }else{
-                    plan = 'no';
-                    foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
                 }
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
+                foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
-            foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
+            foSingleElement.automaticTempB = foSingleElement.path ? API_BASE_URL + '/storage/' + foSingleElement.path : '';
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
 
-            var fiCategoryId = foSingleElement.home_category_id;
+            var fiCategoryId = foSingleElement.category_id;
             if(foCategoryWisePosts[fiCategoryId]===undefined){
-                foCategoryWisePosts[fiCategoryId] = { 
-                    name : foSingleElement.home_title,
-                    mid : fiCategoryId,
-                    sequence : foSingleElement.sequence,
-                    icon : foSingleElement.is_new==1 || foSingleElement.is_new=="1"?'red':'', // If null then new not exist other wise pass any text to visible new tag in app
+                foCategoryWisePosts[fiCategoryId] = {
+                    category_id: fiCategoryId,
+                    name: foSingleElement.cat_name,
+                    sequence: foSingleElement.sequence,
+                    icon: foSingleElement.cat_icon ? API_BASE_URL + '/storage/' + foSingleElement.cat_icon : '',
+                    image: foSingleElement.cat_image ? API_BASE_URL + '/storage/' + foSingleElement.cat_image : '',
                     data : []
                 };
             }
@@ -264,31 +263,20 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             delete foSingleElement.created_at;
             delete foSingleElement.path;
             delete foSingleElement.updated_at;
-            delete foSingleElement.home_title;
-            delete foSingleElement.home_category_id;
-            delete foSingleElement.is_new;
-            delete foSingleElement.sequence;
-            delete foSingleElement.is_show_on_home;
-            delete foSingleElement.home_sub_category_id;
-            delete foSingleElement.home_status;
-            delete foSingleElement.plan_auto
+            delete foSingleElement.plan_auto;
+            delete foSingleElement.planImgName;
             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
         });
 
-        /* Limit + random posts */
-        var foFinalArray = [];
-        foCategoryWisePosts.forEach(foSingleElement =>{
-            if(foSingleElement!=null){
-                if(limit!=""){
-                    foSingleElement.data = foSingleElement.data.sort(() => Math.random() - Math.random()).slice(0, config.POSTLIMIT);
-                }
-                foFinalArray.push(foSingleElement);
+        Object.values(foCategoryWisePosts).forEach(foSingleElement =>{
+            if(limit!=""){
+                foSingleElement.data = foSingleElement.data.sort(() => Math.random() - 0.5).slice(0, config.POSTLIMIT);
             }
+            foFinalArray.push(foSingleElement);
         });
 
-         /* Order by sequance */
-         var sortyKey = 'sequence';
-         foFinalArray.sort(function(a, b) {
+        var sortyKey = 'sequence';
+        foFinalArray.sort(function(a, b) {
             var x = a[sortyKey]; var y = b[sortyKey];
             return ((x < y) ? -1 : ((x > y) ? 1 : 0));
         });

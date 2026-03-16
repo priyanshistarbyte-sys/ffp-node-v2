@@ -33,8 +33,14 @@ exports.getCategoryWisePostSubCatData = async function (req, res) {
 };
 
 exports.getAllCategories = async function (req, res) {
-  // Temporarily bypass cache to get fresh data
-  const foAllCategories = await categoryModel.getAllCategories();
+   // Temporarily bypass cache to get fresh data
+  let foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
+
+  // If cache is empty, fetch from database
+  if (!foAllCategories) {
+    foAllCategories = await categoryModel.getAllCategories();
+  }
+  // const foAllCategories = await categoryModel.getAllCategories();
 
   const responseJson = {
     status: true,
@@ -76,6 +82,20 @@ exports.searchCategories = async function (req, res) {
     status: true,
     message: "Search results retrieved successfully",
     data: searchResults,
+  };
+
+  res.send(securityHelper.ffp_send_response(req, responseJson));
+};
+
+exports.getHomeScreenData = async function (req, res) {
+  const category_posts = await categoryModel.getHomePagePostsListWithCategoryGroup("");
+
+  const responseJson = {
+    status: true,
+    message: "Result Successfully get!....",
+    data: {
+      category_posts,
+    },
   };
 
   res.send(securityHelper.ffp_send_response(req, responseJson));

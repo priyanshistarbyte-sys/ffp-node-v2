@@ -103,9 +103,11 @@ exports.getHomeScreenData = async function (req, res) {
 
   /* Home Category Wise Post Lists */
   const foCategoryGroup = await categories.getHomePagePostsListWithCategoryGroup(5);
+  
+  
 
-  // const foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
-   const foAllCategories = await categories.getAllCategories();
+  const foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
+  //  const foAllCategories = await categories.getAllCategories();
 
   const responseJson = {
     status: true,

@@ -188,7 +188,7 @@ exports.getDataFromCache = async (cacheKey) => {
             foMainCategoryLists.forEach(foSingleElement => {
                 if(foSingleElement.sub=="1" || foSingleElement.sub==1){
                     foSingleElement.sub_category_id = foSingleElement.category_id;
-                    foSingleElement.image = foSingleElement.image;
+                    foSingleElement.image = foSingleElement.image ? `${API_BASE_URL}/storage/${foSingleElement.image}` : `${API_BASE_URL}/assets/images/default.jpg`;
                     foSingleElement.thumb = foSingleElement.image;
                 }else{
                     if(foSingleElement.image!=""){
@@ -200,7 +200,7 @@ exports.getDataFromCache = async (cacheKey) => {
                     }
                 }
                 delete foSingleElement.pathh;
-                foSingleElement.icon = foSingleElement.icon;
+                foSingleElement.icon = foSingleElement.icon ? `${API_BASE_URL}/storage/${foSingleElement.icon}` : '';
                 foMainCategories.push(foSingleElement);
             });
             
