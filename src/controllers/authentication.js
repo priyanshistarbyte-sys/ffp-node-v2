@@ -123,6 +123,12 @@ exports.userRegister = async function (req, res) {
   } else {
     if (req.body.referral_code) {
       req.body.referral_code = req.body.referral_code.trim();
+      const referralValid = await authenticationModel.checkReferralCodeExist(req.body.referral_code);
+      if (!referralValid) {
+        responseJson.status = false;
+        responseJson.message = "Invalid referral code";
+        return res.send(securityHelper.ffp_send_response(req, responseJson));
+      }
     }
     const fiUserId = await authenticationModel.userRegister(req.body);
     if (fiUserId > 0) {

@@ -88,6 +88,14 @@ exports.smsLogUpdate = async (type,mobile,otp) => {
     return true;
 }
 
+exports.checkReferralCodeExist = async (referral_code) => {
+    var foUser = await db.query(
+        queryHelper.select('id', 'admin', { referral_code, role: 'User' }, '', 1)
+    );
+    const users = Array.isArray(foUser[0]) ? foUser[0] : foUser;
+    return users.length > 0;
+}
+
 exports.userRegister = async (request_body) => {
     // Generate 6-digit alphanumeric referral code
     const generateReferralCode = () => {
