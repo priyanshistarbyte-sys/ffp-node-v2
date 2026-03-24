@@ -127,10 +127,12 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
     if(templates.length > 0){
         templates.forEach(foSingleElement => {
             foSingleElement.event_date = foSingleElement.event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.event_date,'d, F Y'):'';
+            foSingleElement.lable = foSingleElement.lable ?? "";
+            foSingleElement.lablebg = foSingleElement.lablebg ?? "";
     
             var plan = 'no';
             var auto = 'yes';
-            if(foSingleElement.planImgName!=""){
+            if(foSingleElement.planImgName){
                 plan = "yes";
                 // foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.id+".jpg";
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
