@@ -176,11 +176,7 @@ exports.getDataFromCache = async (cacheKey) => {
 
         /* Main Category */
         var [foMainCategoryLists] = await db.query(
-            queryHelper.select(
-                '*',
-                'all_main_categories',
-                {}
-            )
+            `SELECT amc.*, c.thumb as cat_thumb, c.status, c.is_show_on_home, c.is_new FROM all_main_categories amc LEFT JOIN categories c ON amc.category_id = c.id`
         );
 
         if(foMainCategoryLists.length > 0){
@@ -188,19 +184,24 @@ exports.getDataFromCache = async (cacheKey) => {
             foMainCategoryLists.forEach(foSingleElement => {
                 if(foSingleElement.sub=="1" || foSingleElement.sub==1){
                     foSingleElement.sub_category_id = foSingleElement.category_id;
-                    foSingleElement.image = foSingleElement.image ? `${API_BASE_URL}/storage/${foSingleElement.image}` : `${API_BASE_URL}/assets/images/default.jpg`;
-                    foSingleElement.thumb = foSingleElement.image;
+                    foSingleElement.image = foSingleElement.image ? `${API_BASE_URL}/storage/${foSingleElement.image}` : "";
+                    foSingleElement.thumb = foSingleElement.cat_thumb ? `${API_BASE_URL}/storage/${foSingleElement.cat_thumb}` : "";
                 }else{
-                    if(foSingleElement.image!=""){
-                        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.image}`;
-                        foSingleElement.image = `${API_BASE_URL}/storage/${foSingleElement.image}`;
-                    }else{
-                        foSingleElement.thumb = `${API_BASE_URL}/assets/images/default.jpg`;
-                        foSingleElement.image = `${API_BASE_URL}/assets/images/default.jpg`;
-                    }
+                    foSingleElement.thumb = foSingleElement.cat_thumb ? `${API_BASE_URL}/storage/${foSingleElement.cat_thumb}` : "";
+                    foSingleElement.image = foSingleElement.image ? `${API_BASE_URL}/storage/${foSingleElement.image}` : "";
                 }
                 delete foSingleElement.pathh;
+                delete foSingleElement.cat_thumb;
                 foSingleElement.icon = foSingleElement.icon ? `${API_BASE_URL}/storage/${foSingleElement.icon}` : '';
+                foSingleElement.sub_category_id = foSingleElement.sub_category_id ?? "";
+                foSingleElement.mtitle = foSingleElement.mtitle ?? "";
+                foSingleElement.mslug = foSingleElement.mslug ?? "";
+                foSingleElement.lable = foSingleElement.lable ?? "";
+                foSingleElement.lablebg = foSingleElement.lablebg ?? "";
+                foSingleElement.plan_auto = foSingleElement.plan_auto ?? "";
+                foSingleElement.status = foSingleElement.status ?? "";
+                foSingleElement.is_show_on_home = foSingleElement.is_show_on_home ?? "";
+                foSingleElement.is_new = foSingleElement.is_new ?? "";
                 foMainCategories.push(foSingleElement);
             });
             

@@ -25,10 +25,10 @@ const { API_BASE_URL } = process.env;
 exports.getAllCategories = async () => {
     const [categories] = await db.query(
         queryHelper.join(
-            'c.id as category_id, c.title as cat_title, c.sort, c.icon, sc.id as sub_category_id, sc.image, sc.mtitle, sc.mslug, sc.lable, sc.lablebg, sc.plan_auto',
+            'c.id as category_id, c.title as cat_title, c.sort, c.icon, c.thumb, c.status, c.is_show_on_home, c.is_new, sc.id as sub_category_id, sc.image, sc.mtitle, sc.mslug, sc.lable, sc.lablebg, sc.plan_auto',
             'categories as c',
-            [['sub_categories as sc', 'c.id = sc.category_id', 'left']],
-            {'sc.status': 1},
+            [['sub_categories as sc', 'c.id = sc.category_id AND sc.status = 1', 'left']],
+            {'c.status': 1},
             'c.sort ASC'
         )
     );
@@ -44,15 +44,18 @@ exports.getAllCategories = async () => {
                 cat_title: cat.cat_title,
                 sort: cat.sort,
                 sub: cat.sub_category_id ? 1 : 0,
-                icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null,
-                sub_category_id: cat.sub_category_id,
-                image: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : null,
-                mtitle: cat.mtitle,
-                mslug: cat.mslug,
-                lable: cat.lable || '',
-                lablebg: cat.lablebg || '',
-                plan_auto: cat.plan_auto,
-                thumb: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : null
+                icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : "",
+                sub_category_id: cat.sub_category_id ?? "",
+                image: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : "",
+                mtitle: cat.mtitle ?? "",
+                mslug: cat.mslug ?? "",
+                lable: cat.lable ?? "",
+                lablebg: cat.lablebg ?? "",
+                plan_auto: cat.plan_auto ?? "",
+                thumb: cat.thumb ? `${API_BASE_URL}/storage/${cat.thumb}` : "",
+                status: cat.status,
+                is_show_on_home: cat.is_show_on_home,
+                is_new: cat.is_new
             };
             foMainCategories.push(formattedCat);
         });
@@ -209,79 +212,173 @@ exports.getAllVideoByCategoryID = async (sub_category_id) => {
 
 
 
+// exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
+
+//     var [homePagePosts] = await db.query(
+//         queryHelper.join(
+//             'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.home_status,h.is_new,' +
+//             'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
+//             'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
+//             'c.icon as cat_icon,sc.image as cat_image',
+//             'home_page_category_wise_posts as h',
+//             [
+//                 ['categories as c', 'h.category_id = c.id', 'left'],
+//                 ['sub_categories as sc', 'h.sub_category_id = sc.id', 'left']
+//             ],
+//             { "h.home_status": 1 }
+//         )
+//     );
+
+//     var foFinalArray = [];
+//     if(homePagePosts.length > 0){
+//         var foCategoryWisePosts = {};
+//         homePagePosts.forEach(foSingleElement => {
+//             foSingleElement.event_date = foSingleElement.sub_event_date && foSingleElement.sub_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.sub_event_date,'d, F Y'):'';
+
+//             var plan = 'no';
+//             var auto = 'yes';
+//             if(foSingleElement.planImgName && foSingleElement.planImgName!=""){
+//                 plan = "yes";
+//                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id+".jpg";
+//                 foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.template_id+".jpg";
+//             }else if(foSingleElement.path && foSingleElement.path!=""){
+//                 if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
+//                     plan = 'yes';
+//                     auto = 'no';
+//                 }
+//                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
+//                 foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
+//             }
+//             foSingleElement.automaticTempB = foSingleElement.path ? API_BASE_URL + '/storage/' + foSingleElement.path : '';
+//             foSingleElement.plan = plan;
+//             foSingleElement.auto = auto;
+
+//             var fiCategoryId = foSingleElement.category_id;
+//             if(foCategoryWisePosts[fiCategoryId]===undefined){
+//                 foCategoryWisePosts[fiCategoryId] = {
+//                     category_id: fiCategoryId,
+//                     name: foSingleElement.cat_name,
+//                     sequence: foSingleElement.sequence,
+//                     icon: foSingleElement.cat_icon ? API_BASE_URL + '/storage/' + foSingleElement.cat_icon : '',
+//                     image: foSingleElement.cat_image ? API_BASE_URL + '/storage/' + foSingleElement.cat_image : '',
+//                     data : []
+//                 };
+//             }
+
+//             delete foSingleElement.created_at;
+//             delete foSingleElement.path;
+//             delete foSingleElement.updated_at;
+//             delete foSingleElement.plan_auto;
+//             delete foSingleElement.planImgName;
+//             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
+//         });
+
+//         Object.values(foCategoryWisePosts).forEach(foSingleElement =>{
+//             if(limit!=""){
+//                 foSingleElement.data = foSingleElement.data.sort(() => Math.random() - 0.5).slice(0, config.POSTLIMIT);
+//             }
+//             foFinalArray.push(foSingleElement);
+//         });
+
+//         var sortyKey = 'sequence';
+//         foFinalArray.sort(function(a, b) {
+//             var x = a[sortyKey]; var y = b[sortyKey];
+//             return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+//         });
+//     }
+
+//     return foFinalArray;
+// }
 exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
+    var selectFields = 'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.is_new,' +
+        'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
+        'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
+        'h.icon as cat_icon,h.category_thumb as cat_thumb,h.image as cat_image,h.language';
     var [homePagePosts] = await db.query(
         queryHelper.join(
-            'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.home_status,h.is_new,' +
-            'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
-            'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
-            'c.icon as cat_icon,sc.image as cat_image',
+            selectFields,
             'home_page_category_wise_posts as h',
-            [
-                ['categories as c', 'h.category_id = c.id', 'left'],
-                ['sub_categories as sc', 'h.sub_category_id = sc.id', 'left']
-            ],
-            { "h.home_status": 1 }
+            [],
+            { 'h.status': 1 }
         )
     );
 
     var foFinalArray = [];
-    if(homePagePosts.length > 0){
+
+    if (homePagePosts.length > 0) {
+
         var foCategoryWisePosts = {};
+
         homePagePosts.forEach(foSingleElement => {
-            foSingleElement.event_date = foSingleElement.sub_event_date && foSingleElement.sub_event_date!="0000-00-00"?commonHelper.customFormatDate(foSingleElement.sub_event_date,'d, F Y'):'';
+
+            // date format
+            foSingleElement.event_date =
+                foSingleElement.sub_event_date && foSingleElement.sub_event_date != "0000-00-00"
+                    ? commonHelper.customFormatDate(foSingleElement.sub_event_date, 'd, F Y')
+                    : '';
 
             var plan = 'no';
             var auto = 'yes';
-            if(foSingleElement.planImgName && foSingleElement.planImgName!=""){
+
+            if (foSingleElement.planImgName && foSingleElement.planImgName != "") {
                 plan = "yes";
-                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id+".jpg";
-                foSingleElement.pathB = API_BASE_URL + '/storage/' +foSingleElement.cat_slug+'/'+ foSingleElement.template_id+".jpg";
-            }else if(foSingleElement.path && foSingleElement.path!=""){
-                if(foSingleElement.plan_auto==1 || foSingleElement.plan_auto=="1"){
+                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id + ".jpg";
+                foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.cat_slug + '/' + foSingleElement.template_id + ".jpg";
+            } else if (foSingleElement.path && foSingleElement.path != "") {
+
+                if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
                     plan = 'yes';
                     auto = 'no';
                 }
+
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
                 foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
             }
-            foSingleElement.automaticTempB = foSingleElement.path ? API_BASE_URL + '/storage/' + foSingleElement.path : '';
+
+            foSingleElement.automaticTempB = foSingleElement.path
+                ? API_BASE_URL + '/storage/' + foSingleElement.path
+                : '';
+
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
 
             var fiCategoryId = foSingleElement.category_id;
-            if(foCategoryWisePosts[fiCategoryId]===undefined){
+
+            if (foCategoryWisePosts[fiCategoryId] === undefined) {
                 foCategoryWisePosts[fiCategoryId] = {
                     category_id: fiCategoryId,
                     name: foSingleElement.cat_name,
                     sequence: foSingleElement.sequence,
                     icon: foSingleElement.cat_icon ? API_BASE_URL + '/storage/' + foSingleElement.cat_icon : '',
-                    image: foSingleElement.cat_image ? API_BASE_URL + '/storage/' + foSingleElement.cat_image : '',
-                    data : []
+                    thumb: foSingleElement.cat_thumb ? API_BASE_URL + '/storage/' + foSingleElement.cat_thumb : '',
+                    data: []
                 };
             }
 
+            // cleanup
             delete foSingleElement.created_at;
             delete foSingleElement.path;
             delete foSingleElement.updated_at;
             delete foSingleElement.plan_auto;
             delete foSingleElement.planImgName;
+
             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
         });
 
-        Object.values(foCategoryWisePosts).forEach(foSingleElement =>{
-            if(limit!=""){
-                foSingleElement.data = foSingleElement.data.sort(() => Math.random() - 0.5).slice(0, config.POSTLIMIT);
+        Object.values(foCategoryWisePosts).forEach(foSingleElement => {
+
+            if (limit != "") {
+                foSingleElement.data = foSingleElement.data
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, config.POSTLIMIT);
             }
+
             foFinalArray.push(foSingleElement);
         });
 
-        var sortyKey = 'sequence';
-        foFinalArray.sort(function(a, b) {
-            var x = a[sortyKey]; var y = b[sortyKey];
-            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-        });
+        // sort by sequence
+        foFinalArray.sort((a, b) => a.sequence - b.sequence);
     }
 
     return foFinalArray;
