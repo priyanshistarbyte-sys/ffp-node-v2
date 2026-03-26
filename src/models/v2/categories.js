@@ -389,7 +389,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
     
     // Search in categories
     const categoriesQuery = `
-        SELECT id, title as name, 'category' as type, icon, sort, created_at, updated_at 
+        SELECT id, title as name, 'category' as type, icon, thumb, sort, created_at, updated_at 
         FROM categories 
         WHERE title LIKE ? 
         ORDER BY sort ASC
@@ -456,7 +456,8 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         id: cat.id,
         name: cat.name,
         type: cat.type,
-        icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null
+        icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null,
+        thumb: cat.thumb ? `${API_BASE_URL}/storage/${cat.thumb}` : null
     }));
     
     // Format sub-categories
