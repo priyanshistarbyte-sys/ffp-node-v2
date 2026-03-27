@@ -134,7 +134,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
             foSingleElement.lablebg = foSingleElement.lablebg ?? "";
     
             var plan = 'no';
-            var auto = 'yes';
+            var auto = 'no';
             if(foSingleElement.planImgName){
                 plan = "yes";
                 // foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.id+".jpg";
@@ -456,8 +456,8 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         id: cat.id,
         name: cat.name,
         type: cat.type,
-        icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : null,
-        thumb: cat.thumb ? `${API_BASE_URL}/storage/${cat.thumb}` : null
+        icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : '',
+        thumb: cat.thumb ? `${API_BASE_URL}/storage/${cat.thumb}` : ''
     }));
     
     // Format sub-categories
@@ -511,7 +511,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         sub_category_id: video.sub_category_id,
         sub_category_name: video.sub_category_name,
         path: `${API_BASE_URL}/storage/${video.path}`,
-        thumb: video.thumb ? `${API_BASE_URL}/storage/${video.thumb}` : null,
+        thumb: video.thumb ? `${API_BASE_URL}/storage/${video.thumb}` : '',
         lable: video.lable,
         lablebg: video.lablebg,
         free_paid: video.free_paid,
@@ -526,7 +526,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         tamp_id: post.tamp_id,
         sub_category_id: post.sub_category_id,
         sub_category_name: post.sub_category_name,
-        post: post.post ? `${API_BASE_URL}/storage/${post.post}` : null,
+        post: post.post ? `${API_BASE_URL}/storage/${post.post}` : '',
         created_at: commonHelper.formatDate(post.created_at)
     }));
     

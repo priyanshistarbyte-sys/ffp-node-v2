@@ -217,7 +217,7 @@ exports.saveUserPost = async function (req, res) {
     const responseJson = {
       status: true,
       message: "Custom Post successfully update!...",
-      data: dbImagePath,
+      data: `${process.env.API_BASE_URL}/storage/${dbImagePath}`,
     };
 
     res.send(securityHelper.ffp_send_response(req, responseJson));
