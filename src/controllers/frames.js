@@ -51,6 +51,7 @@ exports.getFrames = async function (req, res) {
           const cleanImage = frame.image && frame.image !== "" ? frame.image.replace(/^\/+/, "") : "";
           frame.image = cleanImage ? `${baseUrl}/storage/${cleanImage}` : "";
           frame.counter = counter;
+          frame.user_customize = "";
           foDefaultFrames.push(frame);
           counter++;
         }
@@ -60,6 +61,7 @@ exports.getFrames = async function (req, res) {
       const cleanImage = foSingleElement.image && foSingleElement.image !== "" ? foSingleElement.image.replace(/^\/+/, "") : "";
       foSingleElement.image = cleanImage ? `${baseUrl}/storage/${cleanImage}` : "";
       foSingleElement.counter = counter;
+      foSingleElement.user_customize = "";
       foDefaultFrames.push(foSingleElement);
       counter++;
     }
