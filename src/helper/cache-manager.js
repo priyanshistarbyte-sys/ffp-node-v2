@@ -67,7 +67,7 @@ exports.getDataFromCache = async (cacheKey) => {
                 
                 if(foDialog.length > 0){
                     foDialog[0].image = foDialog[0].image && foDialog[0].image !== '' ? 
-                    `${API_BASE_URL}/storage/uploads/images/application_dailog_image/${foDialog[0].image}` : '';
+                    `${API_BASE_URL}/storage/${foDialog[0].image}` : '';
                     foResult.dailog = foDialog[0];
                 }
                 
