@@ -14,12 +14,13 @@ exports.getUserFrames = async (user_id) => {
     return result;
 }
 
-exports.getDefaultFrames = async () => {
+exports.getDefaultFrames = async (sub_category_id) => {
+    const where = sub_category_id ? {'status':1,'sub_category_id':sub_category_id} : {'status':1};
     var [result] = await db.query(
         queryHelper.select(
-            'id,frame_name,free_paid,status,image,data,logosection',
+            'id,frame_name,free_paid,status,image,data,logosection,sub_category_id',
             'frames',
-            {'status':1}
+            where
         )
     );
     return result;

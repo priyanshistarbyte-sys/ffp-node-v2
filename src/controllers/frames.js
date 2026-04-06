@@ -41,7 +41,7 @@ exports.getFrames = async function (req, res) {
   }
 
   const foDefaultFrames = [];
-  const foDefaultFrameLists = await frameModel.getDefaultFrames();
+  const foDefaultFrameLists = await frameModel.getDefaultFrames(req.body.sub_category_id);
 
   foDefaultFrameLists?.forEach((foSingleElement) => {
     if (Array.isArray(foSingleElement)) {
