@@ -10,16 +10,10 @@ exports.getStatusCategories = async function (req, res) {
   const foStatusCat = [];
   const foStatusCatLists = await model.getStatusCategories();
   if (foStatusCatLists.length > 0) {
-    foStatusCatLists.forEach((foSingleElement) => {
-      Object.values(foSingleElement).forEach((record) => {
-        if (record && typeof record === 'object' && record.id) {
-          const thumb = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
-          const image = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
-          foStatusCat.push({
-          ...record, thumb, image, sub: 0,
-        });
-        }
-      });
+    foStatusCatLists.forEach((record) => {
+      const thumb = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
+      const image = record.image ? `${API_BASE_URL}/storage/${record.image}` : "";
+      foStatusCat.push({ ...record, thumb, image, sub: 0 });
     });
   }
 
@@ -49,29 +43,13 @@ exports.getStatusPhotos = async function (req, res) {
   const foSubFramesList = await model.getStatusPhotos(req.body.id, req.body.limit);
 
   if (foSubFramesList?.length > 0) {
-    foSubFramesList.forEach((row) => {
-
-      Object.values(row).forEach((record) => {
-        if (record && typeof record === "object" && record.id) {
-          foSubFrames.push({
-            ...record,
-
-            created_at:
-              record.created_at === "0000-00-00"
-                ? ""
-                : commonHelper.formatDateWithSpash(record.created_at),
-
-            photo: record.photo
-              ? `${API_BASE_URL}/storage/uploads/images/photo/${record.photo}`
-              : "",
-
-            thumb: record.photo
-              ? `${API_BASE_URL}/storage/uploads/images/photo/${record.photo}`
-              : "",
-          });
-        }
+    foSubFramesList.forEach((record) => {
+      foSubFrames.push({
+        ...record,
+        created_at: record.created_at === "0000-00-00" ? "" : commonHelper.formatDateWithSpash(record.created_at),
+        photo: record.photo ? `${API_BASE_URL}/storage/${record.photo}` : "",
+        thumb: record.photo ? `${API_BASE_URL}/storage/${record.photo}` : "",
       });
-
     });
   }
 

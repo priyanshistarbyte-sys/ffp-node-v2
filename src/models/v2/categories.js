@@ -153,14 +153,9 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
             }
             foSingleElement.automaticTempB = API_BASE_URL + '/storage/' + foSingleElement.path;
             
-            // Handle multiple masks stored as JSON array
-            if (foSingleElement.mask && foSingleElement.mask !== "") {
-                try {
-                    const masks = JSON.parse(foSingleElement.mask);
-                    foSingleElement.mask = masks.map(m => `${API_BASE_URL}/storage/${m}`);
-                } catch (e) {
-                    foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
-                }
+            const maskSource = foSingleElement.planImgName || foSingleElement.mask;
+            if (maskSource && maskSource !== "") {
+                foSingleElement.mask = maskSource.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`);
             } else {
                 foSingleElement.mask = null;
             }
@@ -362,6 +357,9 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             delete foSingleElement.updated_at;
             delete foSingleElement.plan_auto;
             delete foSingleElement.planImgName;
+            foSingleElement.cat_icon = foSingleElement.cat_icon ? `${API_BASE_URL}/storage/${foSingleElement.cat_icon}` : '';
+            foSingleElement.cat_thumb = foSingleElement.cat_thumb ? `${API_BASE_URL}/storage/${foSingleElement.cat_thumb}` : '';
+            foSingleElement.cat_image = foSingleElement.cat_image ? `${API_BASE_URL}/storage/${foSingleElement.cat_image}` : '';
 
             foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
         });

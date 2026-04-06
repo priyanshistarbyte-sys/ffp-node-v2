@@ -21,31 +21,28 @@ exports.getHomeScreenData = async function (req, res) {
       let auto = "yes";
       if (foSingleElement.planImgName) {
         plan = "yes";
-        foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.mslug}/${foSingleElement.tid}.jpg`;
-        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.tid}.jpg`;
+        auto = "no";
+        foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
+        foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       } else {
         if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
           plan = "yes";
           auto = "no";
-          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         } else {
           plan = "no";
-          foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         }
+        foSingleElement.pathB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
         foSingleElement.thumb = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       }
       foSingleElement.automaticTempB = `${API_BASE_URL}/storage/${foSingleElement.path}`;
-      
-      // Handle multiple masks stored as JSON array
-      if (foSingleElement.mask) {
-        try {
-          const masks = JSON.parse(foSingleElement.mask);
-          foSingleElement.mask = masks.map(m => `${API_BASE_URL}/storage/${m}`);
-        } catch (e) {
-          foSingleElement.mask = `${API_BASE_URL}/storage/${foSingleElement.mask}`;
-        }
+
+      const maskSource = foSingleElement.planImgName || foSingleElement.mask;
+      if (maskSource && maskSource !== "") {
+        foSingleElement.mask = maskSource.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`);
+      } else {
+        foSingleElement.mask = "";
       }
-      
+
       foSingleElement.path = `${API_BASE_URL}/storage/${foSingleElement.path}`;
       foSingleElement.plan = plan;
       foSingleElement.auto = auto;
