@@ -52,12 +52,6 @@ exports.getAllCategories = async function (req, res) {
 };
 
 exports.getSubCategories = async function (req, res) {
-  /* Validate Request */
-  const errors = validation.validate(req.body, "category_id");
-  if (errors.length > 0) {
-    return validation.errorMessage(req, res, errors);
-  }
-
   const foAllSubCategories = await categoryModel.getSubCategories(req.body.category_id);
 
   const responseJson = {

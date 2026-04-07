@@ -77,7 +77,7 @@ exports.getSubCategories = async (category_id) => {
         order_by = "event_date desc";
     }
     where.status = 1;
-    where.category_id = category_id;
+    if (category_id) where.category_id = category_id;
 
     var [categories] = await db.query(
         queryHelper.select(
@@ -289,7 +289,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
     var selectFields = 'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.is_new,' +
         'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
         'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
-        'h.icon as cat_icon,h.category_thumb as cat_thumb,h.image as cat_image,h.language';
+        'h.icon as cat_icon,h.category_thumb as cat_thumb,h.image as cat_image,h.language,h.has_mask';
     var [homePagePosts] = await db.query(
         queryHelper.join(
             selectFields,
@@ -318,8 +318,9 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
             if (foSingleElement.planImgName && foSingleElement.planImgName != "") {
                 plan = "yes";
-                foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id + ".jpg";
-                foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.cat_slug + '/' + foSingleElement.template_id + ".jpg";
+                // foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id + ".jpg";
+                // foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.cat_slug + '/' + foSingleElement.template_id + ".jpg";
+                foSingleElement.mask = foSingleElement.planImgName.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`);
             } else if (foSingleElement.path && foSingleElement.path != "") {
 
                 if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
@@ -329,6 +330,9 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
                 foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.path;
                 foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.path;
+                foSingleElement.mask = "";
+            } else {
+                foSingleElement.mask = "";
             }
 
             foSingleElement.automaticTempB = foSingleElement.path
@@ -338,11 +342,11 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             foSingleElement.plan = plan;
             foSingleElement.auto = auto;
 
-            var fiCategoryId = foSingleElement.category_id;
+            var fiSubCategoryId = foSingleElement.sub_category_id;
 
-            if (foCategoryWisePosts[fiCategoryId] === undefined) {
-                foCategoryWisePosts[fiCategoryId] = {
-                    category_id: fiCategoryId,
+            if (foCategoryWisePosts[fiSubCategoryId] === undefined) {
+                foCategoryWisePosts[fiSubCategoryId] = {
+                    sub_category_id: fiSubCategoryId,
                     name: foSingleElement.cat_name,
                     sequence: foSingleElement.sequence,
                     icon: foSingleElement.cat_icon ? API_BASE_URL + '/storage/' + foSingleElement.cat_icon : '',
@@ -361,7 +365,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             foSingleElement.cat_thumb = foSingleElement.cat_thumb ? `${API_BASE_URL}/storage/${foSingleElement.cat_thumb}` : '';
             foSingleElement.cat_image = foSingleElement.cat_image ? `${API_BASE_URL}/storage/${foSingleElement.cat_image}` : '';
 
-            foCategoryWisePosts[fiCategoryId].data.push(foSingleElement);
+            foCategoryWisePosts[fiSubCategoryId].data.push(foSingleElement);
         });
 
         Object.values(foCategoryWisePosts).forEach(foSingleElement => {
