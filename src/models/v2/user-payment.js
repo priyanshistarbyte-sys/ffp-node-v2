@@ -17,7 +17,7 @@ exports.userPurchasePackage = async (
         /*  Get plan */
         const [plans] = await db.query(
             queryHelper.select(
-                'id, plan_name, duration, duration_type, price, discount_price, is_free',
+                'id, plan_name, duration, duration_type, price, discount_price, is_free, status',
                 'subscription_plans',
                 { id: packageid },
                 '',
@@ -28,8 +28,12 @@ exports.userPurchasePackage = async (
         if (!plans.length) {
             return { status: false, message: 'Invalid plan' };
         }
+        
 
         const plan = plans[0];
+        if(plan.status == 0){
+            return { status: false, message: 'Sorry, This plan no longer exist. Thank you' };
+        }
         let finalPrice = plan.discount_price ?? plan.price;
 
         /* 1. Apply coupon code  */
