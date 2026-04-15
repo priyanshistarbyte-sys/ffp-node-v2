@@ -7,5 +7,6 @@ var frames = require('@/controllers/frames');
 router.post('/get-frames',frames.getFrames);
 router.post('/get-sub-frames',frames.getSubFrames);
 router.post('/add-custom-frames',frames.addCustomFrames);
+router.post('/remove-custom-frames',frames.removeCustomFrames);
 
 module.exports = router;

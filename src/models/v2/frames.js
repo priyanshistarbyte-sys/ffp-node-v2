@@ -42,3 +42,9 @@ exports.addCustomFrame = (data) => {
         queryHelper.insert('customframe', data)
     );
 }
+
+exports.deleteCustomFrame = (user_id, frame_name) => {
+    return db.query(
+        queryHelper.delete('customframe', { user_id, frame_name })
+    );
+}

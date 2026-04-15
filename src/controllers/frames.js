@@ -178,3 +178,18 @@ exports.addCustomFrames = async function (req, res) {
     }));
   }
 };
+
+exports.removeCustomFrames = async function (req, res) {
+  const errors = validation.validate(req.body, "user_id_not_0,frame_name");
+  if (errors.length > 0) {
+    return validation.errorMessage(req, res, errors);
+  }
+
+  await frameModel.deleteCustomFrame(req.body.user_id, req.body.frame_name);
+
+  res.send(securityHelper.ffp_send_response(req, {
+    status: true,
+    message: "Custom frame removed successfully!",
+    data: [],
+  }));
+};
