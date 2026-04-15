@@ -161,10 +161,11 @@ exports.addCustomFrames = async function (req, res) {
 
     await frameModel.addCustomFrame(frameData);
 
+    const baseUrl = API_BASE_URL.replace(/\/+$/, "");
     const responseJson = {
       status: true,
       message: "Custom frame added successfully!",
-      data: { image: dbPath + fsImageName },
+      data: { image: `${baseUrl}/${storagePath}${fsImageName}` },
     };
 
     res.send(securityHelper.ffp_send_response(req, responseJson));

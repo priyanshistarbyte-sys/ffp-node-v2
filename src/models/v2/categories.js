@@ -479,16 +479,10 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
         const plan = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'yes' : 'no');
         const auto = temp.planImgName ? 'yes' : (temp.plan_auto == 1 ? 'no' : 'yes');
         
-        // Handle multiple masks
-        let maskUrls = null;
-        if (temp.mask && temp.mask !== "") {
-            try {
-                const masks = JSON.parse(temp.mask);
-                maskUrls = masks.map(m => `${API_BASE_URL}/storage/${m}`);
-            } catch (e) {
-                maskUrls = `${API_BASE_URL}/storage/${temp.mask}`;
-            }
-        }
+        const maskSource = temp.planImgName || temp.mask;
+        const maskUrls = (maskSource && maskSource !== "")
+            ? maskSource.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`)
+            : "";
         
         return {
             id: temp.id,
