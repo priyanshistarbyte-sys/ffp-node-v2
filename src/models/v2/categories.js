@@ -409,12 +409,12 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
     
     // Search in templates
     const templatesQuery = `
-        SELECT t.id, t.path, t.free_paid, t.event_date, t.sub_category_id, t.font_type, t.font_size, 
-               t.font_color, t.lable, t.lablebg, t.language, t.planImgName, t.has_mask, t.mask,
-               sc.mtitle as sub_category_name, sc.mslug as cat_slug, sc.plan_auto, 'template' as type
+        SELECT t.id, t.planImgName, t.free_paid, t.event_date, t.sub_category_id, t.path, t.font_type, t.font_size,
+               t.font_color, t.lable, t.lablebg, t.created_at, t.updated_at, t.has_mask, IFNULL(t.mask, '') AS mask,
+               s.mslug as cat_slug, s.mtitle as cat_name, s.plan_auto, s.is_trending, t.language, 'template' as type
         FROM tamplet t
-        LEFT JOIN sub_categories sc ON t.sub_category_id = sc.id
-        WHERE sc.mtitle LIKE ? AND sc.status = 1
+        LEFT JOIN sub_categories s ON t.sub_category_id = s.id
+        WHERE s.mtitle LIKE ? AND s.status = 1
         ORDER BY t.id DESC
     `;
     
@@ -488,14 +488,22 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
             id: temp.id,
             type: temp.type,
             sub_category_id: temp.sub_category_id,
-            sub_category_name: temp.sub_category_name,
+            cat_name: temp.cat_name,
+            cat_slug: temp.cat_slug,
             thumb: `${API_BASE_URL}/storage/${temp.path}`,
             pathB: `${API_BASE_URL}/storage/${temp.path}`,
             mask: maskUrls,
+            has_mask: temp.has_mask,
+            is_trending: temp.is_trending,
             event_date: temp.event_date !== '0000-00-00' ? commonHelper.customFormatDate(temp.event_date, 'd, F Y') : '',
             plan: plan,
             auto: auto,
             free_paid: temp.free_paid,
+            font_type: temp.font_type,
+            font_size: temp.font_size,
+            font_color: temp.font_color,
+            lable: temp.lable ?? '',
+            lablebg: temp.lablebg ?? '',
             language: temp.language
         };
     });
