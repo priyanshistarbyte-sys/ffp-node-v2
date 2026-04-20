@@ -17,7 +17,7 @@ exports.getUserPlanDetails = async (user_id) => {
         queryHelper.join(
             'p.packageid,s.plan_name',
             'payments as p',
-            [['subscription_plans as s','p.packageid=s.plan_id','left']],
+            [['subscription_plans as s','p.packageid=s.id','left']],
             {'p.user_id':user_id},
             'p.id DESC',
             1

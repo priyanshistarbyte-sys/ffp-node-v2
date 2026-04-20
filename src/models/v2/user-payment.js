@@ -214,6 +214,7 @@ exports.userPurchasePackage = async (
                 user_id,
                 amount,
                 date: config.ONLY_DATE(),
+                month: plan.duration_type === 'month' ? plan.duration : 0,
                 transactionid,
                 status: plan.plan_name,
                 packageid: plan.id,
@@ -254,6 +255,6 @@ exports.userPurchasePackage = async (
 
     } catch (err) {
         console.error('Payment Error:', err);
-        return { status: false, message: 'Something went wrong' };
+        return { status: false, message: err.message || 'Something went wrong' };
     }
 };
