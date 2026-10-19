@@ -8,8 +8,24 @@ const categories = require(`@/models/${config.api_version}/categories`);
 const { API_BASE_URL } = process.env;
 
 exports.getHomeScreenData = async function (req, res) {
+  /* Run all queries in parallel */
+  const [
+    foTodayPostsLists,
+    foUpComingPostsLists,
+    foTodayVideoLists,
+    foHomeSlider,
+    foCategoryGroup,
+    foAllCategories,
+  ] = await Promise.all([
+    model.getTodayPosts(config.POSTLIMIT),
+    model.getUpcomingPosts(config.POSTLIMIT),
+    model.getTodayVideoPost(config.POSTLIMIT),
+    cacheManager.getDataFromCache("foAppSlider"),
+    categories.getHomePagePostsListWithCategoryGroup(5),
+    cacheManager.getDataFromCache("foMainCategories"),
+  ]);
+
   /* Get Today Posts */
-  const foTodayPostsLists = await model.getTodayPosts(config.POSTLIMIT);
   const foTodayPosts = [];
   if (foTodayPostsLists.length > 0) {
     foTodayPostsLists.forEach((foSingleElement) => {
@@ -50,7 +66,7 @@ exports.getHomeScreenData = async function (req, res) {
       delete foSingleElement.created_at;
       delete foSingleElement.mslug;
       delete foSingleElement.plan_auto;
-      delete foSingleElement.planImgName;
+      // delete foSingleElement.planImgName;
       delete foSingleElement.updated_at;
 
       foTodayPosts.push(foSingleElement);
@@ -59,7 +75,6 @@ exports.getHomeScreenData = async function (req, res) {
   /* Get Today Posts */
 
   /* Get UpComing Posts */
-  const foUpComingPostsLists = await model.getUpcomingPosts(config.POSTLIMIT);
   const foUpComingPosts = [];
   if (foUpComingPostsLists.length > 0) {
     foUpComingPostsLists.forEach((foSingleElement) => {
@@ -81,7 +96,6 @@ exports.getHomeScreenData = async function (req, res) {
   /* Get UpComing Posts */
 
   /* Today Video Posts */
-  const foTodayVideoLists = await model.getTodayVideoPost(config.POSTLIMIT);
   const foTodayVideo = [];
   if (foTodayVideoLists.length > 0) {
     foTodayVideoLists.forEach((foSingleElement) => {
@@ -98,14 +112,6 @@ exports.getHomeScreenData = async function (req, res) {
   }
   /* Today Video Posts */
 
-  const foHomeSlider = await cacheManager.getDataFromCache("foAppSlider");
-
-  /* Home Category Wise Post Lists */
-  const foCategoryGroup = await categories.getHomePagePostsListWithCategoryGroup(5);
-  
-  
-
-  const foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
   //  const foAllCategories = await categories.getAllCategories();
 
   const responseJson = {
@@ -170,7 +176,7 @@ exports.getTodayPosts = async function (req, res) {
       delete foSingleElement.mslug;
       delete foSingleElement.path;
       delete foSingleElement.plan_auto;
-      delete foSingleElement.planImgName;
+      // delete foSingleElement.planImgName;
       delete foSingleElement.updated_at;
 
       foTodayPosts.push(foSingleElement);

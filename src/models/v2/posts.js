@@ -21,7 +21,7 @@ exports.getTodayPosts = async (limit = "") => {
         queryHelper.join(
             `
             t.id,
-            t.planImgName,
+            t.mask,
             t.free_paid,
             DATE_FORMAT(t.event_date, '%Y-%m-%d') AS event_date,
             t.sub_category_id,

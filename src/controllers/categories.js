@@ -33,14 +33,10 @@ exports.getCategoryWisePostSubCatData = async function (req, res) {
 };
 
 exports.getAllCategories = async function (req, res) {
-   // Temporarily bypass cache to get fresh data
   let foAllCategories = await cacheManager.getDataFromCache("foMainCategories");
-
-  // If cache is empty, fetch from database
   if (!foAllCategories) {
     foAllCategories = await categoryModel.getAllCategories();
   }
-  // const foAllCategories = await categoryModel.getAllCategories();
 
   const responseJson = {
     status: true,

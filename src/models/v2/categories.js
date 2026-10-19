@@ -23,45 +23,34 @@ const { API_BASE_URL } = process.env;
 // }
 
 exports.getAllCategories = async () => {
-    const [categories] = await db.query(
-        queryHelper.join(
-            'c.id as category_id, c.title as cat_title, c.sort, c.icon, c.thumb, c.status, c.is_show_on_home, c.is_new, sc.id as sub_category_id, sc.image, sc.mtitle, sc.mslug, sc.lable, sc.lablebg, sc.plan_auto',
-            'categories as c',
-            [['sub_categories as sc', 'c.id = sc.category_id AND sc.status = 1', 'left']],
-            {'c.status': 1},
-            'c.sort ASC'
-        )
+    const [rows] = await db.query(
+        `SELECT amc.*, c.thumb as cat_thumb, c.status, c.is_show_on_home, c.is_new 
+         FROM all_main_categories amc 
+         LEFT JOIN categories c ON amc.category_id = c.id 
+         ORDER BY amc.sort ASC`
     );
 
-    console.log('test');
-    console.log(API_BASE_URL);
-    
-    const foMainCategories = [];    
-    if (categories.length > 0) {
-        categories.forEach(cat => {
-            const formattedCat = {
-                category_id: cat.category_id,
-                cat_title: cat.cat_title,
-                sort: cat.sort,
-                sub: cat.sub_category_id ? 1 : 0,
-                icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : "",
-                sub_category_id: cat.sub_category_id ?? "",
-                image: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : "",
-                mtitle: cat.mtitle ?? "",
-                mslug: cat.mslug ?? "",
-                lable: cat.lable ?? "",
-                lablebg: cat.lablebg ?? "",
-                plan_auto: cat.plan_auto ?? "",
-                thumb: cat.thumb ? `${API_BASE_URL}/storage/${cat.thumb}` : "",
-                status: cat.status,
-                is_show_on_home: cat.is_show_on_home,
-                is_new: cat.is_new
-            };
-            foMainCategories.push(formattedCat);
-        });
-    }
-
-    return foMainCategories;
+    return rows.map(cat => {
+        const formattedCat = {
+            category_id: cat.category_id,
+            cat_title: cat.cat_title,
+            sort: cat.sort,
+            sub: cat.sub ?? 0,
+            icon: cat.icon ? `${API_BASE_URL}/storage/${cat.icon}` : "",
+            sub_category_id: cat.sub_category_id ?? "",
+            image: cat.image ? `${API_BASE_URL}/storage/${cat.image}` : "",
+            mtitle: cat.mtitle ?? "",
+            mslug: cat.mslug ?? "",
+            lable: cat.lable ?? "",
+            lablebg: cat.lablebg ?? "",
+            plan_auto: cat.plan_auto ?? "",
+            thumb: cat.cat_thumb ? `${API_BASE_URL}/storage/${cat.cat_thumb}` : "",
+            status: cat.status ?? "",
+            is_show_on_home: cat.is_show_on_home ?? "",
+            is_new: cat.is_new ?? ""
+        };
+        return formattedCat;
+    });
 }
 
 exports.getSubCategories = async (category_id) => {
@@ -167,7 +156,7 @@ exports.getLast10ByCategoryIdTemplate = async (sub_category_id, limit) => {
             delete foSingleElement.mslug;
             delete foSingleElement.path;
             delete foSingleElement.plan_auto;
-            delete foSingleElement.planImgName;
+            // delete foSingleElement.planImgName;
             delete foSingleElement.updated_at;
 
             foTemplates.push(foSingleElement);
@@ -288,7 +277,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
 
     var selectFields = 'h.sub_category_id,h.category_id,h.mtitle as cat_name,h.mslug as cat_slug,h.sequence,h.is_new,' +
         'h.template_id,h.free_paid,h.event,h.sub_event_date,h.path,h.font_type,h.font_size,h.font_color,' +
-        'h.template_lable,h.template_lablebg,h.planImgName,h.created_at,h.updated_at,h.plan_auto,' +
+        'h.template_lable,h.template_lablebg,h.mask,h.created_at,h.updated_at,h.plan_auto,' +
         'h.icon as cat_icon,h.category_thumb as cat_thumb,h.image as cat_image,h.language,h.has_mask';
     var [homePagePosts] = await db.query(
         queryHelper.join(
@@ -298,6 +287,16 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             { 'h.status': 1 }
         )
     );
+//     var [homePagePosts] = await db.query(
+//     queryHelper.join(
+//         selectFields,
+//         'home_page_category_wise_posts as h',
+//         [],
+//         { 'h.status': 1 },
+//         'h.sequence ASC',
+//         limit || 50   // default limit
+//     )
+//    );
 
     var foFinalArray = [];
 
@@ -316,11 +315,11 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             var plan = 'no';
             var auto = 'yes';
 
-            if (foSingleElement.planImgName && foSingleElement.planImgName != "") {
+            if (foSingleElement.mask && foSingleElement.mask != "") {
                 plan = "yes";
                 // foSingleElement.thumb = API_BASE_URL + '/storage/' + foSingleElement.template_id + ".jpg";
                 // foSingleElement.pathB = API_BASE_URL + '/storage/' + foSingleElement.cat_slug + '/' + foSingleElement.template_id + ".jpg";
-                foSingleElement.mask = foSingleElement.planImgName.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`);
+                foSingleElement.mask = foSingleElement.mask.split(',').map(m => `${API_BASE_URL}/storage/${m.trim()}`);
             } else if (foSingleElement.path && foSingleElement.path != "") {
 
                 if (foSingleElement.plan_auto == 1 || foSingleElement.plan_auto == "1") {
@@ -360,7 +359,7 @@ exports.getHomePagePostsListWithCategoryGroup = async (limit) => {
             delete foSingleElement.path;
             delete foSingleElement.updated_at;
             delete foSingleElement.plan_auto;
-            delete foSingleElement.planImgName;
+            // delete foSingleElement.planImgName;
             foSingleElement.cat_icon = foSingleElement.cat_icon ? `${API_BASE_URL}/storage/${foSingleElement.cat_icon}` : '';
             foSingleElement.cat_thumb = foSingleElement.cat_thumb ? `${API_BASE_URL}/storage/${foSingleElement.cat_thumb}` : '';
             foSingleElement.cat_image = foSingleElement.cat_image ? `${API_BASE_URL}/storage/${foSingleElement.cat_image}` : '';
@@ -409,7 +408,7 @@ exports.searchCategoriesAndSubCategories = async (searchTerm) => {
     
     // Search in templates
     const templatesQuery = `
-        SELECT t.id, t.planImgName, t.free_paid, t.event_date, t.sub_category_id, t.path, t.font_type, t.font_size,
+        SELECT t.id, t.mask, t.free_paid, t.event_date, t.sub_category_id, t.path, t.font_type, t.font_size,
                t.font_color, t.lable, t.lablebg, t.created_at, t.updated_at, t.has_mask, IFNULL(t.mask, '') AS mask,
                s.mslug as cat_slug, s.mtitle as cat_name, s.plan_auto, s.is_trending, t.language, 'template' as type
         FROM tamplet t

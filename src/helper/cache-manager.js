@@ -8,21 +8,25 @@ const cachePath = path.join(__dirname, "../cache/cache.json");
 
 const { API_BASE_URL } = process.env;
 
+let memoryCache = null;
+
+exports.clearMemoryCache = () => { memoryCache = null; };
+
 exports.getDataFromCache = async (cacheKey) => {
     var fbIsCacheExist = true;
     var foCacheDetails = {};
 
     try {
-        // var fileCache = await fs.readFile("../cache/cache.json", "binary"); 
-        var fileCache = await fs.readFile(cachePath, "binary"); 
-        fileCache = JSON.parse(fileCache);
-        return fileCache[cacheKey];
+        if (!memoryCache) {
+            var fileCache = await fs.readFile(cachePath, "binary");
+            memoryCache = JSON.parse(fileCache);
+        }
+        return memoryCache[cacheKey];
     } catch (error) {
         fbIsCacheExist = false;
     }
-    
-    // fbIsCacheExist = false; // False if ignore caching
 
+    // fbIsCacheExist = false; // False if ignore caching
 
     /* Create New Cache */
     if(fbIsCacheExist===false){
@@ -214,11 +218,13 @@ exports.getDataFromCache = async (cacheKey) => {
         /* Subsctiption Plans */
         try {
             var [foSubPlansLists] = await db.query(
-                queryHelper.select(
-                    '*',
-                    'subscription_plans_description',
-                    {}
-                )
+                `SELECT sp.id AS plan_id, sp.plan_name, sp.special_title, sp.duration, sp.duration_type,
+                 sp.price, sp.discount_price, sp.discount, sp.status, sp.sequence, sp.is_free, sp.created_at,
+                 sd.id AS sub_dis_id, sd.title, sd.sign
+                 FROM subscription_plans sp
+                 LEFT JOIN subscription_descriptions sd ON sd.plan_id = sp.id
+                 WHERE sp.status = 1
+                 ORDER BY sp.sequence ASC`
             );
 
             if (foSubPlansLists.length > 0) {
@@ -248,36 +254,30 @@ exports.getDataFromCache = async (cacheKey) => {
                         };
                     }
 
-                    foSubPlansGroupped[foSingleElement.plan_id].description.push({
-                        "sub_dis_id": (foSingleElement.sub_dis_id || '').toString(),
-                        "plan_id": (foSingleElement.plan_id || '').toString(),
-                        "sign": (foSingleElement.sign || '').toString(),
-                        "title": foSingleElement.title || ''
-                    });
+                    if (foSingleElement.sub_dis_id) {
+                        foSubPlansGroupped[foSingleElement.plan_id].description.push({
+                            "sub_dis_id": (foSingleElement.sub_dis_id || '').toString(),
+                            "plan_id": (foSingleElement.plan_id || '').toString(),
+                            "sign": (foSingleElement.sign || '').toString(),
+                            "title": foSingleElement.title || ''
+                        });
+                    }
                 });
 
-                var foSubscriptionPlans = Object.values(foSubPlansGroupped);
-
                 foCacheDetails.foSubscriptionPlans =
-                    commonHelper.sort_by_key(foSubscriptionPlans, 'sequence');
+                    commonHelper.sort_by_key(Object.values(foSubPlansGroupped), 'sequence');
+            } else {
+                foCacheDetails.foSubscriptionPlans = [];
             }
         } catch (error) {
             console.log('Error in subscription plans:', error.message);
             foCacheDetails.foSubscriptionPlans = [];
         }
-
         /* Subsctiption Plans */
 
         /* Write Cache File */
-        var responseJson = await fs.writeFile(cachePath, JSON.stringify(foCacheDetails), (err) => {
-            if (err)
-                console.log(err);
-            else {
-                console.log("File written successfully\n");
-            }
-        });
+        await fs.writeFile(cachePath, JSON.stringify(foCacheDetails));
+        memoryCache = foCacheDetails;
         return foCacheDetails[cacheKey];
     }
-
-    // return foCacheDetails;
-}
+};

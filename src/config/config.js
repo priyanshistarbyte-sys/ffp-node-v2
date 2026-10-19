@@ -8,7 +8,7 @@ const { API_BASE_URL } = process.env;
 module.exports = {
   name: 'Free Festival Post',
   db: {
-    database: 'festivalpost',
+    database: 'festivalpost_test',
     user: 'root',
     pwd: '',
     host: 'localhost',

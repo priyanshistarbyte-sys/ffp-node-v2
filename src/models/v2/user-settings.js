@@ -48,7 +48,6 @@ exports.checkExistingComplain = async (user_id) => {
     return complaints;
 }
 
-
 exports.insertComplain = async (request_body) => {
     var insert = await db.query(
         queryHelper.insert(
